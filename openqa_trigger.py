@@ -64,7 +64,7 @@ for current_version, link, name, arch in read_currents():
     if match:
         from_i = int(match.group('from'))
         to_i = int(match.group('to')) + 1
-        jobs.append(tuple(range(from_i, to_i)))
+        jobs.extend(range(from_i, to_i))
 
 # write info about latest versions
 f = open(PERSISTENT, "w")
