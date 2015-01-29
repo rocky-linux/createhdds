@@ -15,7 +15,7 @@ CURRENT_TEST = "https://fedoraproject.org/wiki/Test_Results:Current_Installation
 ISO_URL = "https://kojipkgs.fedoraproject.org/mash/rawhide-%s/rawhide/%s/os/images/boot.iso"
 ISO_REGEX = re.compile(r'https://kojipkgs\.fedoraproject\.org/mash/(?P<name>rawhide-(?P<build>\d+))/rawhide/(?P<arch>x86_64|i386)/os/images/boot\.iso')
 ISO_PATH = "/var/lib/openqa/factory/iso/"
-RUN_COMMAND = "/var/lib/openqa/script/client isos post ISO=%s DISTRI=fedora VERSION=rawhide FLAVOR=server ARCH=%s BUILD=%s"
+RUN_COMMAND = "/var/lib/openqa/script/client isos post ISO=%s DISTRI=fedora VERSION=rawhide FLAVOR=server ARCH=%s BUILD='%s %s'"
 VERSIONS = ['i386', 'x86_64']
 
 # read last tested version from file
@@ -36,8 +36,10 @@ def read_last():
 # read current version from Current Installation Test page
 def read_currents():
     page = urllib2.urlopen(CURRENT_TEST).read()
+    f_regex = re.compile(r'<title>.*Fedora (?P<version>\d+).*</title>')
+    m = f_regex.search(page)
     for match in ISO_REGEX.finditer(page):
-        yield match.group("build"), match.group(0), match.group("name"), match.group("arch")
+        yield m.group('version'), match.group("build"), match.group(0), match.group("name"), match.group("arch")
 
 # download rawhide iso from koji
 def download_rawhide_iso(link, name, arch):
@@ -49,8 +51,8 @@ def download_rawhide_iso(link, name, arch):
 
 # run OpenQA 'isos' job on selected isoname, with given arch and build
 # returns list of job IDs
-def run_openqa_jobs(isoname, arch, build):
-    command = RUN_COMMAND % (isoname, arch, build)
+def run_openqa_jobs(isoname, arch, fedora_version, build):
+    command = RUN_COMMAND % (isoname, arch, fedora_version, build)
 
     # starts OpenQA jobs
     output = subprocess.check_output(command.split())
@@ -73,7 +75,7 @@ def run_if_newer():
     jobs = []
 
     # for every architecture
-    for current_version, link, name, arch in read_currents():
+    for f_version, current_version, link, name, arch in read_currents():
         # don't run when there is newer version
         last_version = last_versions.get(arch, None)
         if last_version is not None and (last_version == current_version):
@@ -82,7 +84,7 @@ def run_if_newer():
         json_parsed[arch] = current_version
 
         isoname = download_rawhide_iso(link, name, arch)
-        job_ids = run_openqa_jobs(isoname, arch, current_version)
+        job_ids = run_openqa_jobs(isoname, arch, f_version, current_version)
 
         jobs.extend(job_ids)
 
@@ -105,7 +107,7 @@ if __name__ == "__main__":
         name = "rawhide-%s" % version
         link = ISO_URL % (sys.argv[1], sys.argv[2])
         isoname = download_rawhide_iso(link, name, arch)
-        job_ids = run_openqa_jobs(isoname, arch, version)
+        job_ids = run_openqa_jobs(isoname, arch, "", version)
         print job_ids
     else:
         print "%s [rawhide_version arch]" % sys.arv[0]
