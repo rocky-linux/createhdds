@@ -5,7 +5,7 @@ import time
 import conf_test_suites
 
 
-API_ROOT = "http://10.34.28.126/api/v1"
+API_ROOT = "http://localhost/api/v1"
 SLEEPTIME = 60
 
 
@@ -21,6 +21,7 @@ def get_passed_testcases(job_ids):
         for job_id, url in running_jobs.items():
             job_state = requests.get(url).json()['job']
             if job_state['state'] == 'done':
+                print "Job %s is done" % job_id
                 finished_jobs[job_id] = job_state
                 del running_jobs[job_id]
         if running_jobs:
@@ -63,19 +64,29 @@ def get_relval_commands(passed_testcases):
 
 def report_results(job_ids):
     commands = get_relval_commands(get_passed_testcases(job_ids))
+    print "Running relval commands:"
     for command in commands:
+        print command
         os.system(command)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate per-testcase results from OpenQA job runs")
     parser.add_argument('jobs', type=int, nargs='+')
+    parser.add_argument('--report', default=False, action='store_true')
 
     args = parser.parse_args()
 
     passed_testcases = get_passed_testcases(args.jobs)
+    commands = get_relval_commands(passed_testcases)
 
     import pprint
     pprint.pprint(passed_testcases)
-    pprint.pprint(get_relval_commands(passed_testcases))
+    if not args.report:
+        print "\n\n### No reporting is done! ###\n\n"
+        pprint.pprint(commands)
+    else:
+        for command in commands:
+            print command
+            os.system(command)
 

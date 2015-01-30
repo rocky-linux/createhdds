@@ -8,14 +8,14 @@ import os.path
 import sys
 import subprocess
 
-#from evaluate_jobs import evaluate_jobs
+from report_job_results import report_results
 
 PERSISTENT = "/var/tmp/openqa_watcher.json"
 CURRENT_TEST = "https://fedoraproject.org/wiki/Test_Results:Current_Installation_Test"
 ISO_URL = "https://kojipkgs.fedoraproject.org/mash/rawhide-%s/rawhide/%s/os/images/boot.iso"
 ISO_REGEX = re.compile(r'https://kojipkgs\.fedoraproject\.org/mash/(?P<name>rawhide-(?P<build>\d+))/rawhide/(?P<arch>x86_64|i386)/os/images/boot\.iso')
 ISO_PATH = "/var/lib/openqa/factory/iso/"
-RUN_COMMAND = "/var/lib/openqa/script/client isos post ISO=%s DISTRI=fedora VERSION=rawhide FLAVOR=server ARCH=%s BUILD='%s_%s'"
+RUN_COMMAND = "/var/lib/openqa/script/client isos post ISO=%s DISTRI=fedora VERSION=rawhide FLAVOR=server ARCH=%s BUILD=%s_%s"
 VERSIONS = ['i386', 'x86_64']
 
 # read last tested version from file
@@ -45,8 +45,9 @@ def read_currents():
 def download_rawhide_iso(link, name, arch):
     isoname = "%s_%s.iso" % (name, arch)
     filename = os.path.join(ISO_PATH, isoname)
-    link = "http://" + link[len("https://"):]
-    urlgrabber.urlgrab(link, filename)
+    if not os.path.isfile(filename):
+        link = "http://" + link[len("https://"):]
+        urlgrabber.urlgrab(link, filename)
     return isoname
 
 # run OpenQA 'isos' job on selected isoname, with given arch and build
@@ -94,8 +95,8 @@ def run_if_newer():
     f.close()
 
     # wait for jobs to finish and display results
-    #evaluate_jobs(jobs)
     print jobs
+    report_results(jobs)
 
 
 if __name__ == "__main__":

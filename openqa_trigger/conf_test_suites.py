@@ -1,6 +1,11 @@
 TESTCASES = {
         "QA:Testcase_Boot_default_install Server offline": {
-            "section": 'Default boot',
+            "section": 'Default boot and install',
+            "env": "$RUNARCH$",
+            "type": "Installation",
+            },
+        "QA:Testcase_Boot_default_install Server netinst": {
+            "section": 'Default boot and install',
             "env": "$RUNARCH$",
             "type": "Installation",
             },
@@ -11,7 +16,7 @@ TESTCASES = {
             },
         "QA:Testcase_partitioning_guided_empty": {
             "section": "Guided storage configuration",
-            "env": "x86 BIOS",
+            "env": "x86",  # Probably a bug in relval - column name is "x86 BIOS", but there is a comment there just behind 'x86' which probably makes it strip the rest
             "type": "Installation",
             },
         "QA:Testcase_Anaconda_User_Interface_Graphical": {
@@ -31,7 +36,7 @@ TESTCASES = {
             },
         "QA:Testcase_partitioning_guided_delete_all": {
             "section": "Guided storage configuration",
-            "env": "x86 BIOS",
+            "env": "x86",  # Probably a bug in relval - column name is "x86 BIOS", but there is a comment there just behind 'x86' which probably makes it strip the rest
             "type": "Installation",
             },
         "QA:Testcase_install_to_SATA": {
@@ -41,7 +46,7 @@ TESTCASES = {
             },
         "QA:Testcase_partitioning_guided_multi_select": {
             "section": "Guided storage configuration",
-            "env": "x86 BIOS",
+            "env": "x86",  # Probably a bug in relval - column name is "x86 BIOS", but there is a comment there just behind 'x86' which probably makes it strip the rest
             "type": "Installation",
             },
         "QA:Testcase_install_to_SCSI": {
@@ -74,27 +79,27 @@ TESTCASES = {
 
 TESTSUITES = {
     "server_simple":[
-        "QA:Testcase_Boot_default_install Server offline",
+        "QA:Testcase_Boot_default_install Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         ],
     "server_delete_pata":[
-        "QA:Testcase_Boot_default_install Server offline",
+        "QA:Testcase_Boot_default_install Server netinst",
         "QA:Testcase_install_to_PATA",
         "QA:Testcase_partitioning_guided_delete_all",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         ],
     "server_sata_multi":[
-        "QA:Testcase_Boot_default_install Server offline",
+        "QA:Testcase_Boot_default_install Server netinst",
         "QA:Testcase_install_to_SATA",
         "QA:Testcase_partitioning_guided_multi_select",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         ],
-    "server_scsi_updatesimg":[
-        "QA:Testcase_Boot_default_install Server offline",
+    "server_scsi_updates_img":[
+        "QA:Testcase_Boot_default_install Server netinst",
         "QA:Testcase_install_to_SCSI",
         "QA:Testcase_partitioning_guided_empty",
         "QA:Testcase_Anaconda_updates.img_via_URL",
