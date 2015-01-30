@@ -15,7 +15,7 @@ CURRENT_TEST = "https://fedoraproject.org/wiki/Test_Results:Current_Installation
 ISO_URL = "https://kojipkgs.fedoraproject.org/mash/rawhide-%s/rawhide/%s/os/images/boot.iso"
 ISO_REGEX = re.compile(r'https://kojipkgs\.fedoraproject\.org/mash/(?P<name>rawhide-(?P<build>\d+))/rawhide/(?P<arch>x86_64|i386)/os/images/boot\.iso')
 ISO_PATH = "/var/lib/openqa/factory/iso/"
-RUN_COMMAND = "/var/lib/openqa/script/client isos post ISO=%s DISTRI=fedora VERSION=rawhide FLAVOR=server ARCH=%s BUILD='%s %s'"
+RUN_COMMAND = "/var/lib/openqa/script/client isos post ISO=%s DISTRI=fedora VERSION=rawhide FLAVOR=server ARCH=%s BUILD='%s_%s'"
 VERSIONS = ['i386', 'x86_64']
 
 # read last tested version from file
