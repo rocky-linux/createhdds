@@ -79,8 +79,12 @@ def run_if_newer():
     for f_version, current_version, link, name, arch in read_currents():
         # don't run when there is newer version
         last_version = last_versions.get(arch, None)
+        print f_version, current_version, link, name, arch,
         if last_version is not None and (last_version == current_version):
+            print " - Skipped"
             continue
+
+        print ""
 
         json_parsed[arch] = current_version
 
