@@ -69,6 +69,21 @@ TESTCASES = {
             "env": "Result",
             "type": "Installation",
             },
+        "QA:Testcase_install_repository_Mirrorlist_graphical": {
+            "section": "Installation repositories",
+            "env": "result",
+            "type": "Installation",
+            },
+        "QA:Testcase_install_repository_HTTP/FTP_graphical": {
+            "section": "Installation repositories",
+            "env": "result",
+            "type": "Installation",
+            },
+        "QA:Testcase_install_repository_HTTP/FTP_variation": {
+            "section": "Installation repositories",
+            "env": "result",
+            "type": "Installation",
+            },
 #        "": {
 #            "section": "",
 #            "env": "x86",
@@ -81,6 +96,7 @@ TESTSUITES = {
     "server_simple":[
         "QA:Testcase_Boot_default_install Server netinst",
         "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_partitioning_guided_empty",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         ],
@@ -112,5 +128,30 @@ TESTSUITES = {
         "QA:Testcase_kickstart_user_creation",
         "QA:Testcase_Kickstart_Http_Server_Ks_Cfg",
         ],
+    "server_mirrorlist_graphical":[
+        "QA:Testcase_Boot_default_install Server netinst",
+        "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_partitioning_guided_empty",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_install_repository_Mirrorlist_graphical",
+        ],
+    "server_repository_http_graphical":[
+        "QA:Testcase_Boot_default_install Server netinst",
+        "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_partitioning_guided_empty",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_install_repository_HTTP/FTP_graphical",
+        ],
+    "server_mirrorlist_http_variation":[
+        "QA:Testcase_Boot_default_install Server netinst",
+        "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_partitioning_guided_empty",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_install_repository_HTTP/FTP_variation",
+        ],
+
     }
 
