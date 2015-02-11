@@ -80,7 +80,7 @@ def run_if_newer():
         # don't run when there is newer version
         last_version = last_versions.get(arch, None)
         print f_version, current_version, link, name, arch,
-        if last_version is not None and (last_version == current_version):
+        if last_version is not None and (last_version >= current_version):
             print " - Skipped"
             continue
 
