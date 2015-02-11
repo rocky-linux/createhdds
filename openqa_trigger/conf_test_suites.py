@@ -55,7 +55,7 @@ TESTCASES = {
             "type": "Installation",
             },
         "QA:Testcase_Anaconda_updates.img_via_URL": {
-            "section": "Miscellaneous ",
+            "section": "Miscellaneous",
             "env": "Result",
             "type": "Installation",
             },
@@ -159,6 +159,15 @@ TESTSUITES = {
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         "QA:Testcase_install_repository_HTTP/FTP_graphical",
+        "QA:Testcase_Package_Sets_Minimal_Package_Install",
+        ],
+    "server_repository_http_variation":[
+        "QA:Testcase_Boot_default_install Server netinst",
+        "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_partitioning_guided_empty",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_install_repository_HTTP/FTP_variation",
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     "server_mirrorlist_http_variation":[

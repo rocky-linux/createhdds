@@ -41,16 +41,17 @@ def get_passed_testcases(job_ids):
 
 
 def get_relval_commands(passed_testcases):
-    relval_template = "relval report-results --unmanned --result pass"
+    relval_template = "relval report-auto"
     commands = []
     for key in passed_testcases:
         cmd_ = relval_template
         version, _, build, arch = key
 
         if version == 'rawhide':
-            cmd_ += ' --release "%s" --date "%s"' % tuple(build.split('_')) #"22_20150110"
+            cmd_ += ' --release "%s" --build Rawhide --version "%s"' % tuple(build.split('_')) #"22_20150110"
         elif version == 'branched':
-            cmd_ += ' --release "%s" --milestone "%s" --compose "%s"' % tuple(build.split('_')) #"22_Alpha_TC1"
+            #cmd_ += ' --release "%s" --milestone "%s" --compose "%s"' % tuple(build.split('_')) #"22_Alpha_TC1"
+            continue
 
         for tc_name in passed_testcases[key]:
             testcase = conf_test_suites.TESTCASES[tc_name]
@@ -58,7 +59,8 @@ def get_relval_commands(passed_testcases):
             tc_type = testcase['type']
             tc_section = testcase['section']
 
-            commands.append('%s --env "%s" --testtype "%s" --section "%s" --testcase "%s"' % (cmd_, tc_env, tc_type,  tc_section, tc_name))
+            commands.append('%s --environment "%s" --testtype "%s" --section "%s" --testcase "%s" pass' % (cmd_, tc_env, tc_type,  tc_section, tc_name))
+
     return commands
 
 
