@@ -9,6 +9,10 @@ mkfs ext4 /dev/sda1
 mkfs ext4 /dev/sda2
 mount /dev/sda1 /
 write /testfile "Hello, world!"
+umount /
+mount /dev/sda2 /
+write /testfile "Oh, hi Mark"
+umount /
 _EOF_
 
 guestfish <<_EOF_
