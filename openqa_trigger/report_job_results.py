@@ -46,12 +46,7 @@ def get_relval_commands(passed_testcases):
     for key in passed_testcases:
         cmd_ = relval_template
         version, _, build, arch = key
-
-        if version == 'rawhide':
-            cmd_ += ' --release "%s" --build Rawhide --version "%s"' % tuple(build.split('_')) #"22_20150110"
-        elif version == 'branched':
-            #cmd_ += ' --release "%s" --milestone "%s" --compose "%s"' % tuple(build.split('_')) #"22_Alpha_TC1"
-            continue
+        cmd_ += ' --release "%s" --milestone "%s" --compose "%s"' % tuple(build.split('_'))
 
         for tc_name in passed_testcases[key]:
             testcase = conf_test_suites.TESTCASES[tc_name]
