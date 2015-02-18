@@ -98,12 +98,13 @@ def jobs_from_current(wiki):
         else:
             runarches.append(arch)
             json_parsed[arch] = currev.sortname
-    jobs = jobs_from_fedfind(currev.ff_release, runarches)
 
     # write info about latest versions
     f = open(PERSISTENT, "w")
     f.write(json.dumps(json_parsed))
     f.close()
+
+    jobs = jobs_from_fedfind(currev.ff_release, runarches)
 
     return (jobs, currev)
 
@@ -138,7 +139,7 @@ def run_current(args, wiki):
     """run OpenQA for current release validation event, if we have
     not already done it.
     """
-    jobs = jobs_from_current(wiki)[0]
+    jobs, _ = jobs_from_current(wiki)
     # wait for jobs to finish and display results
     if jobs:
         print jobs
@@ -172,28 +173,24 @@ def run_all(args, wiki=None):
     if they exist, and test current compose if it's different from
     either and it's new.
     """
-    jobs = []
     skip = None
-    (currjobs, currev) = jobs_from_current(wiki)
-    print("Jobs from current validation event: {0}".format(currjobs))
-    jobs.extend(currjobs)
+    (jobs, currev) = jobs_from_current(wiki)
+    print("Jobs from current validation event: {0}".format(jobs))
 
-    utcdate = datetime.datetime.utcnow()
-    day = datetime.timedelta(days=1)
-    utcdate = utcdate - day
-    if currev and currev.compose == utcdate.strftime('%Y%m%d'):
+    yesterday = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+    if currev and currev.compose == yesterday.strftime('%Y%m%d'):
         skip = currev.milestone
 
     if not skip.lower() == 'rawhide':
         rawhide_ffrel = fedfind.release.get_release(
-            release='Rawhide', compose=utcdate)
+            release='Rawhide', compose=yesterday)
         rawjobs = jobs_from_fedfind(rawhide_ffrel)
         print("Jobs from {0}: {1}".format(rawhide_ffrel.version, rawjobs))
         jobs.extend(rawjobs)
 
     if not skip.lower() == 'branched':
         branched_ffrel = fedfind.release.get_release(
-            release=currev.release, compose=utcdate)
+            release=currev.release, compose=yesterday)
         branchjobs = jobs_from_fedfind(branched_ffrel)
         print("Jobs from {0}: {1}".format(branched_ffrel.version, branchjobs))
         jobs.extend(branchjobs)
@@ -247,7 +244,6 @@ if __name__ == "__main__":
         "and today's Rawhide and Branched nightly's (if found).")
     parser_all.add_argument(
         '-t', '--test', help=test_help, required=False, action='store_true')
-    parser_current.set_defaults(func=run_current)
     parser_all.set_defaults(func=run_all)
 
     args = parser.parse_args()
