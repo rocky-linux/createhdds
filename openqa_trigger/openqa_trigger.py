@@ -8,6 +8,7 @@ import os.path
 import sys
 import subprocess
 import argparse
+import datetime
 # We can at least find images and run OpenQA jobs without wikitcms
 try:
     import wikitcms.wiki
@@ -77,12 +78,15 @@ def run_openqa_jobs(isoname, arch, image_version):
     else:
         return []
 
-# run OpenQA on current compose if it is newer version since last run
-def run_current(args, wiki):
+def jobs_from_current(wiki):
+    """Schedule jobs against the 'current' release validation event
+    (according to wikitcms) if we have not already. Returns a tuple,
+    first value is the job list, second is the current event.
+    """
     if not wiki:
-        sys.exit("python-wikitcms is required for --current. Try "
-                 "--compose to run against today's Rawhide nightly "
-                 "without wiki result submission.")
+        print("python-wikitcms is required for current validation event "
+              "discovery.")
+        return ([], None)
     last_versions, json_parsed = read_last()
     currev = wiki.current_event
     print("Current event: {0}".format(currev.version))
@@ -101,52 +105,7 @@ def run_current(args, wiki):
     f.write(json.dumps(json_parsed))
     f.close()
 
-    # wait for jobs to finish and display results
-    print jobs
-    report_results(jobs)
-    sys.exit()
-
-def run_compose(args, wiki=None):
-    """run OpenQA on a specified compose, optionally reporting results
-    if a matching wikitcms ValidationEvent can be found.
-    """
-    # get the fedfind release object
-    try:
-        ff_release = fedfind.release.get_release(
-            release=args.release, milestone=args.milestone,
-            compose=args.compose)
-    except ValueError as err:
-        sys.exit(err[0])
-
-    if args.submit_results:
-        try:
-            # sanity check, there's...some voodoo in here. but this isn't
-            # really strictly necessary, and we don't use the event object
-            # for anything.
-            event = wiki.get_validation_event(
-                release=ff_release.release, milestone=ff_release.milestone,
-                compose=ff_release.compose)
-            evff = event.ff_release
-            if evff.version != ff_release.version:
-                print("Release validation event's fedfind object does not "
-                      "match the one from fedfind's get_release(). Something's"
-                      " wrong somewhere. Result submission disabled.")
-                args.submit_results = False
-        except ValueError:
-            print("Warning: could not find validation test event for this "
-                  "compose. Continuing with OpenQA jobs, but results will "
-                  " not be submitted to the wiki.")
-            args.submit_results = False
-
-    print("Running on compose: {0}".format(ff_release.version))
-    if args.arch:
-        jobs = jobs_from_fedfind(ff_release, [args.arch])
-    else:
-        jobs = jobs_from_fedfind(ff_release)
-    print(jobs)
-    if args.submit_results:
-        report_results(jobs)
-    sys.exit()
+    return (jobs, currev)
 
 def jobs_from_fedfind(ff_release, arches=VERSIONS):
     """Given a fedfind.Release object, find the ISOs we want and run
@@ -172,6 +131,76 @@ def jobs_from_fedfind(ff_release, arches=VERSIONS):
         job_ids = run_openqa_jobs(isoname, image.arch, version)
         jobs.extend(job_ids)
     return jobs
+
+## SUB-COMMAND FUNCTIONS
+
+def run_current(args, wiki):
+    """run OpenQA for current release validation event, if we have
+    not already done it.
+    """
+    jobs = jobs_from_current(wiki)[0]
+    # wait for jobs to finish and display results
+    if jobs:
+        print jobs
+        report_results(jobs)
+    sys.exit()
+
+def run_compose(args, wiki=None):
+    """run OpenQA on a specified compose, optionally reporting results
+    if a matching wikitcms ValidationEvent is found by relval/wikitcms
+    """
+    # get the fedfind release object
+    try:
+        ff_release = fedfind.release.get_release(
+            release=args.release, milestone=args.milestone,
+            compose=args.compose)
+    except ValueError as err:
+        sys.exit(err[0])
+
+    print("Running on compose: {0}".format(ff_release.version))
+    if args.arch:
+        jobs = jobs_from_fedfind(ff_release, [args.arch])
+    else:
+        jobs = jobs_from_fedfind(ff_release)
+    print(jobs)
+    if args.submit_results:
+        report_results(jobs)
+    sys.exit()
+
+def run_all(args, wiki=None):
+    """Do everything we can: test both Rawhide and Branched nightlies
+    if they exist, and test current compose if it's different from
+    either and it's new.
+    """
+    jobs = []
+    skip = None
+    (currjobs, currev) = jobs_from_current(wiki)
+    print("Jobs from current validation event: {0}".format(currjobs))
+    jobs.extend(currjobs)
+
+    utcdate = datetime.datetime.utcnow()
+    day = datetime.timedelta(days=1)
+    utcdate = utcdate - day
+    if currev and currev.compose == utcdate.strftime('%Y%m%d'):
+        skip = currev.milestone
+
+    if not skip.lower() == 'rawhide':
+        rawhide_ffrel = fedfind.release.get_release(
+            release='Rawhide', compose=utcdate)
+        rawjobs = jobs_from_fedfind(rawhide_ffrel)
+        print("Jobs from {0}: {1}".format(rawhide_ffrel.version, rawjobs))
+        jobs.extend(rawjobs)
+
+    if not skip.lower() == 'branched':
+        branched_ffrel = fedfind.release.get_release(
+            release=currev.release, compose=utcdate)
+        branchjobs = jobs_from_fedfind(branched_ffrel)
+        print("Jobs from {0}: {1}".format(branched_ffrel.version, branchjobs))
+        jobs.extend(branchjobs)
+
+    if jobs:
+        report_results(jobs)
+    sys.exit()
 
 if __name__ == "__main__":
     test_help = "Operate on the staging wiki (for testing)"
@@ -212,6 +241,14 @@ if __name__ == "__main__":
     parser_compose.add_argument(
         '-t', '--test', help=test_help, required=False, action='store_true')
     parser_compose.set_defaults(func=run_compose)
+
+    parser_all = subparsers.add_parser(
+        'all', description="Run for the current validation event (if needed) "
+        "and today's Rawhide and Branched nightly's (if found).")
+    parser_all.add_argument(
+        '-t', '--test', help=test_help, required=False, action='store_true')
+    parser_current.set_defaults(func=run_current)
+    parser_all.set_defaults(func=run_all)
 
     args = parser.parse_args()
 
