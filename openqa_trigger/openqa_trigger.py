@@ -169,32 +169,49 @@ def run_compose(args, wiki=None):
     sys.exit()
 
 def run_all(args, wiki=None):
-    """Do everything we can: test both Rawhide and Branched nightlies
-    if they exist, and test current compose if it's different from
-    either and it's new.
+    """Do everything we can: test current validation event compose if
+    it's new, amd test both Rawhide and Branched nightlies if they
+    exist and aren't the same as the 'current' compose.
     """
-    skip = None
+    skip = ''
+
+    # Run for 'current' validation event.
     (jobs, currev) = jobs_from_current(wiki)
     print("Jobs from current validation event: {0}".format(jobs))
 
-    yesterday = datetime.datetime.utcnow() - datetime.timedelta(days=1)
-    if currev and currev.compose == yesterday.strftime('%Y%m%d'):
+    utcdate = datetime.datetime.utcnow()
+    if args.yesterday:
+        utcdate = utcdate - datetime.timedelta(days=1)
+    if currev and currev.compose == utcdate.strftime('%Y%m%d'):
+        # Don't schedule tests for the same compose as both "today's
+        # nightly" and "current validation event"
         skip = currev.milestone
 
-    if not skip.lower() == 'rawhide':
-        rawhide_ffrel = fedfind.release.get_release(
-            release='Rawhide', compose=yesterday)
-        rawjobs = jobs_from_fedfind(rawhide_ffrel)
-        print("Jobs from {0}: {1}".format(rawhide_ffrel.version, rawjobs))
-        jobs.extend(rawjobs)
+    # Run for day's Rawhide nightly (if not same as current event.)
+    if skip.lower() != 'rawhide':
+        try:
+            rawhide_ffrel = fedfind.release.get_release(
+                release='Rawhide', compose=utcdate)
+            rawjobs = jobs_from_fedfind(rawhide_ffrel)
+            print("Jobs from {0}: {1}".format(rawhide_ffrel.version, rawjobs))
+            jobs.extend(rawjobs)
+        except ValueError as err:
+            print("Rawhide image discovery failed: {0}".format(err))
 
-    if not skip.lower() == 'branched':
-        branched_ffrel = fedfind.release.get_release(
-            release=currev.release, compose=yesterday)
-        branchjobs = jobs_from_fedfind(branched_ffrel)
-        print("Jobs from {0}: {1}".format(branched_ffrel.version, branchjobs))
-        jobs.extend(branchjobs)
-
+    # Run for day's Branched nightly (if not same as current event.)
+    # We must guess a release for Branched, fedfind cannot do so. Best
+    # guess we can make is the same as the 'current' validation event
+    # compose (this is why we have jobs_from_current return currev).
+    if skip.lower() != 'branched':
+        try:
+            branched_ffrel = fedfind.release.get_release(
+                release=currev.release, milestone='Branched', compose=utcdate)
+            branchjobs = jobs_from_fedfind(branched_ffrel)
+            print("Jobs from {0}: {1}".format(branched_ffrel.version,
+                                              branchjobs))
+            jobs.extend(branchjobs)
+        except ValueError as err:
+            print("Branched image discovery failed: {0}".format(err))
     if jobs:
         report_results(jobs)
     sys.exit()
@@ -241,7 +258,11 @@ if __name__ == "__main__":
 
     parser_all = subparsers.add_parser(
         'all', description="Run for the current validation event (if needed) "
-        "and today's Rawhide and Branched nightly's (if found).")
+        "and today's Rawhide and Branched nightly's (if found). 'Today' is "
+        "calculated for the UTC time zone, no matter the system timezone.")
+    parser_all.add_argument(
+        '-y', '--yesterday', help="Run on yesterday's nightlies, not today's",
+        required=False, action='store_true')
     parser_all.add_argument(
         '-t', '--test', help=test_help, required=False, action='store_true')
     parser_all.set_defaults(func=run_all)
