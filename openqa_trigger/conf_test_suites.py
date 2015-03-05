@@ -104,6 +104,11 @@ TESTCASES = {
             "env": "x86 BIOS",
             "type": "Installation",
             },
+        "QA:Testcase_partitioning_guided_multi_empty_all": {
+            "section": "Guided storage configuration",
+            "env": "x86 BIOS",
+            "type": "Installation",
+            },
 #        "": {
 #            "section": "",
 #            "env": "x86",
@@ -209,6 +214,14 @@ TESTSUITES = {
         "Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_guided_free_space",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_Package_Sets_Minimal_Package_Install",
+        ],
+    "server_multi_empty": [
+        "Server netinst",
+        "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_partitioning_guided_multi_empty_all",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
