@@ -19,7 +19,7 @@ guestfish <<_EOF_
 sparse disk_freespace.img 10G
 run
 part-init /dev/sda mbr
-part-add /dev/sda p 1 2097152
+part-add /dev/sda p 4096 2097152
 mkfs ext4 /dev/sda1
 mount /dev/sda1 /
 write /testfile "Hello, world!"
