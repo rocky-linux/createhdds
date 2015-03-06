@@ -109,6 +109,11 @@ TESTCASES = {
             "env": "x86 BIOS",
             "type": "Installation",
             },
+        "QA:Testcase_Partitioning_On_Software_RAID": {
+            "section": "Custom storage configuration ",
+            "env": "x86 BIOS",
+            "type": "Installation",
+            },
 #        "": {
 #            "section": "",
 #            "env": "x86",
@@ -222,6 +227,14 @@ TESTSUITES = {
         "Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_guided_multi_empty_all",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_Package_Sets_Minimal_Package_Install",
+        ],
+    "server_software_raid": [
+        "Server netinst",
+        "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_Partitioning_On_Software_RAID",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
