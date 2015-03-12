@@ -110,8 +110,13 @@ TESTCASES = {
             "type": "Installation",
             },
         "QA:Testcase_Partitioning_On_Software_RAID": {
-            "section": "Custom storage configuration ",
+            "section": "Custom storage configuration",
             "env": "x86 BIOS",
+            "type": "Installation",
+            },
+        "QA:Testcase_Kickstart_Hd_Device_Path_Ks_Cfg": {
+            "section": "Kickstart",
+            "env": "Result",
             "type": "Installation",
             },
 #        "": {
@@ -238,6 +243,12 @@ TESTSUITES = {
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
+        ],
+    "server_kickstart_hdd":[
+        "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_kickstart_user_creation",
+        "QA:Testcase_Kickstart_Hd_Device_Path_Ks_Cfg",
         ],
     }
 
