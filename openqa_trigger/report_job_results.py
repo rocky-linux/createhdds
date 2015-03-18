@@ -45,7 +45,7 @@ def get_relval_commands(passed_testcases):
     commands = []
     for key in passed_testcases:
         cmd_ = relval_template
-        version, _, build, arch = key
+        version, flavor, build, arch = key
         cmd_ += ' --release "%s" --milestone "%s" --compose "%s"' % tuple(build.split('_'))
 
         for tc_name in passed_testcases[key]:
@@ -53,6 +53,8 @@ def get_relval_commands(passed_testcases):
             tc_env = arch if testcase['env'] == '$RUNARCH$' else testcase['env']
             tc_type = testcase['type']
             tc_section = testcase['section']
+            if 'name_cb' in testcase:
+                tc_name = testcase['name_cb'](flavor)
 
             commands.append('%s --environment "%s" --testtype "%s" --section "%s" --testcase "%s" pass' % (cmd_, tc_env, tc_type,  tc_section, tc_name))
 

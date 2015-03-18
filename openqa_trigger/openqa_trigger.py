@@ -20,7 +20,7 @@ from report_job_results import report_results
 
 PERSISTENT = "/var/tmp/openqa_watcher.json"
 ISO_PATH = "/var/lib/openqa/factory/iso/"
-RUN_COMMAND = "/var/lib/openqa/script/client isos post ISO=%s DISTRI=fedora VERSION=rawhide FLAVOR=server ARCH=%s BUILD=%s"
+RUN_COMMAND = "/var/lib/openqa/script/client isos post ISO=%s DISTRI=fedora VERSION=rawhide FLAVOR=%s ARCH=%s BUILD=%s"
 VERSIONS = ['i386', 'x86_64']
 
 # read last tested version from file
@@ -39,20 +39,24 @@ def read_last():
     return result, json_parsed
 
 def download_image(image):
-    """Download a given image with a name that should be unique for
-    this event and arch (until we start testing different images
-    for the same event and arch). Returns the filename of the image
-    (not the path).
+    """Download a given image with a name that should be unique.
+    Returns the filename of the image (not the path).
     """
-    isoname = "{0}_{1}.iso".format(image.version.replace(' ', '_'), image.arch)
+    ver = image.version.replace(' ', '_')
+    if image.imagetype == 'boot':
+        isoname = "{0}_{1}_{2}_boot.iso".format(ver, image.payload, image.arch)
+    else:
+        isoname = "{0}_{1}".format(ver, image.filename)
     filename = os.path.join(ISO_PATH, isoname)
     if not os.path.isfile(filename):
+        print("Downloading {0} ({1}) to {2}...".format(
+            image.url, image.desc, filename))
         # Icky hack around a urlgrabber bug:
         # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=715416
         urlgrabber.urlgrab(image.url.replace('https', 'http'), filename)
     return isoname
 
-def run_openqa_jobs(isoname, arch, image_version):
+def run_openqa_jobs(isoname, flavor, arch, build):
     """# run OpenQA 'isos' job on selected isoname, with given arch
     and a version string. **NOTE**: the version passed to OpenQA as
     BUILD and is parsed back into the 'relval report-auto' arguments
@@ -61,7 +65,7 @@ def run_openqa_jobs(isoname, arch, image_version):
     will be passed as --release, --compose and --milestone. Returns
     list of job IDs.
     """
-    command = RUN_COMMAND % (isoname, arch, image_version)
+    command = RUN_COMMAND % (isoname, flavor, arch, build)
 
     # starts OpenQA jobs
     output = subprocess.check_output(command.split())
@@ -113,23 +117,64 @@ def jobs_from_fedfind(ff_release, arches=VERSIONS):
     jobs on them. arches is an iterable of arches to run on, if not
     specified, we'll use our constant.
     """
-    # Find boot.iso images for our arches; third query is a bit of a
-    # bodge till I know what 22 TCs/RCs will actually look like,
-    # ideally we want a query that will reliably return one image per
-    # arch without us having to filter further, but we can always just
-    # take the first image for each arch if necessary
+    # Find currently-testable images for our arches.
     jobs = []
     queries = (
-        fedfind.release.Query('imagetype', ('boot',)),
+        fedfind.release.Query('imagetype', ('boot', 'live')),
         fedfind.release.Query('arch', arches),
-        fedfind.release.Query('payload', ('server', 'generic')))
+        fedfind.release.Query('payload', ('server', 'generic', 'workstation')))
+    images = ff_release.find_images(queries)
 
-    for image in ff_release.find_images(queries):
-        print("{0} {1}".format(image.url, image.desc))
+    # Now schedule jobs. First, let's get the BUILD value for openQA.
+    build = '_'.join(
+        (ff_release.release, ff_release.milestone, ff_release.compose))
+
+    # Next let's schedule the 'universal' tests.
+    # We have different images in different composes: nightlies only
+    # have a generic boot.iso, TC/RC builds have Server netinst/boot
+    # and DVD. We always want to run *some* tests - 
+    # default_boot_and_install at least - for all images we find, then
+    # we want to run all the tests that are not image-dependent on
+    # just one image. So we have a special 'universal' flavor and
+    # product in openQA; all the image-independent test suites run for
+    # that product. Here, we find the 'best' image we can for the
+    # compose we're running on (a DVD if possible, a boot.iso or
+    # netinst if not), and schedule the 'universal' jobs on that
+    # image.
+    for arch in arches:
+        okimgs = (img for img in images if img.arch == arch and
+                  any(img.imagetype == okt
+                      for okt in ('dvd', 'boot', 'netinst')))
+        bestscore = 0
+        bestimg = None
+        for img in okimgs:
+            if img.imagetype == 'dvd':
+                score = 10
+            else:
+                score = 1
+            if img.payload == 'generic':
+                score += 5
+            elif img.payload == 'server':
+                score += 3
+            elif img.payload == 'workstation':
+                score += 1
+            if score > bestscore:
+                bestimg = img
+                bestscore = score
+        if not bestimg:
+            print("No universal tests image found for {0)!".format(arch))
+            continue
+        print("Running universal tests for {0} with {1}!".format(
+            arch, bestimg.desc))
+        isoname = download_image(bestimg)
+        job_ids = run_openqa_jobs(isoname, 'universal', arch, build)
+        jobs.extend(job_ids)
+
+    # Now schedule per-image jobs.
+    for image in images:
         isoname = download_image(image)
-        version = '_'.join(
-            (ff_release.release, ff_release.milestone, ff_release.compose))
-        job_ids = run_openqa_jobs(isoname, image.arch, version)
+        flavor = '_'.join((image.payload, image.imagetype))
+        job_ids = run_openqa_jobs(isoname, flavor, image.arch, build)
         jobs.extend(job_ids)
     return jobs
 

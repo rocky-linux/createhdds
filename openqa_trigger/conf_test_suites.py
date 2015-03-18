@@ -1,10 +1,15 @@
+def default_install_cb(flavor):
+    """Figure out the correct test case name for a default_boot_and_
+    install pass for a given flavor.
+    """
+    (payload, imagetype) = flavor.split('_')
+    imagetype = imagetype.replace('boot', 'netinst')
+    imagetype = imagetype.replace('dvd', 'offline')
+    return "{0} {1}".format(payload, imagetype)
+
 TESTCASES = {
-        "Server offline": {
-            "section": 'Default boot and install',
-            "env": "$RUNARCH$",
-            "type": "Installation",
-            },
-        "Server netinst": {
+        "QA:Testcase_Boot_default_install": {
+            "name_cb": default_install_cb,
             "section": 'Default boot and install',
             "env": "$RUNARCH$",
             "type": "Installation",
@@ -120,6 +125,7 @@ TESTCASES = {
             "type": "Installation",
             },
 #        "": {
+#            "name_cb": callbackfunc # optional, called with 'flavor'
 #            "section": "",
 #            "env": "x86",
 #            "type": "Installation",
@@ -128,16 +134,21 @@ TESTCASES = {
 
 
 TESTSUITES = {
-    "server_simple":[
-        "Server netinst",
+    "default_install":[
+        "QA:Testcase_Boot_default_install",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_guided_empty",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        ],
+    "package_set_minimal":[
+        "QA:Testcase_partitioning_guided_empty",
+        "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     "server_delete_pata":[
-        "Server netinst",
         "QA:Testcase_install_to_PATA",
         "QA:Testcase_partitioning_guided_delete_all",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
@@ -145,7 +156,6 @@ TESTSUITES = {
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     "server_sata_multi":[
-        "Server netinst",
         "QA:Testcase_install_to_SATA",
         "QA:Testcase_partitioning_guided_multi_select",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
@@ -153,7 +163,6 @@ TESTSUITES = {
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     "server_scsi_updates_img":[
-        "Server netinst",
         "QA:Testcase_install_to_SCSI",
         "QA:Testcase_partitioning_guided_empty",
         "QA:Testcase_Anaconda_updates.img_via_URL",
@@ -168,7 +177,6 @@ TESTSUITES = {
         "QA:Testcase_Kickstart_Http_Server_Ks_Cfg",
         ],
     "server_mirrorlist_graphical":[
-        "Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_guided_empty",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
@@ -177,7 +185,6 @@ TESTSUITES = {
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     "server_repository_http_graphical":[
-        "Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_guided_empty",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
@@ -186,7 +193,6 @@ TESTSUITES = {
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     "server_repository_http_variation":[
-        "Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_guided_empty",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
@@ -195,7 +201,6 @@ TESTSUITES = {
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     "server_mirrorlist_http_variation":[
-        "Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_guided_empty",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
@@ -204,7 +209,6 @@ TESTSUITES = {
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     "server_simple_encrypted": [
-        "Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_guided_empty",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
@@ -213,7 +217,6 @@ TESTSUITES = {
         "QA:Testcase_partitioning_guided_encrypted",
         ],
     "server_delete_partial": [
-        "Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_guided_delete_partial",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
@@ -221,7 +224,6 @@ TESTSUITES = {
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     "server_simple_free_space": [
-        "Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_guided_free_space",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
@@ -229,7 +231,6 @@ TESTSUITES = {
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     "server_multi_empty": [
-        "Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_guided_multi_empty_all",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
@@ -237,7 +238,6 @@ TESTSUITES = {
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     "server_software_raid": [
-        "Server netinst",
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_Partitioning_On_Software_RAID",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
