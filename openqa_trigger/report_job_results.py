@@ -50,7 +50,8 @@ def get_passed_testcases(job_ids):
                 env = arch if uniqueres['env'] == '$RUNARCH$' else uniqueres['env']
                 result = ResTuple(
                     testtype=uniqueres['type'], release=release, milestone=milestone, compose=compose,
-                    testcase=testcase, section=uniqueres['section'], testname=testname, env=env, status='pass')
+                    testcase=testcase, section=uniqueres['section'], testname=testname, env=env, status='pass',
+                    bot=True)
                 passed_testcases.add(result)
 
     return sorted(list(passed_testcases), key=attrgetter('testcase'))
