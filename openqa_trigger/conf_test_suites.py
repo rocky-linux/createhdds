@@ -124,6 +124,11 @@ TESTCASES = {
             "env": "Result",
             "type": "Installation",
             },
+       "QA:Testcase_upgrade_fedup_cli_previous_minimal": {
+           "section": "Upgrade",
+           "env": "x86 BIOS",
+           "type": "Installation",
+           },
 #        "": {
 #            "name_cb": callbackfunc # optional, called with 'flavor'
 #            "section": "",
@@ -249,6 +254,9 @@ TESTSUITES = {
         "QA:Testcase_Anaconda_user_creation",
         "QA:Testcase_kickstart_user_creation",
         "QA:Testcase_Kickstart_Hd_Device_Path_Ks_Cfg",
+        ],
+    "fedup_minimal":[
+        "QA:Testcase_upgrade_fedup_cli_previous_minimal",
         ],
     }
 
