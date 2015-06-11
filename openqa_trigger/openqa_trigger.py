@@ -162,7 +162,7 @@ def jobs_from_fedfind(ff_release, arches=VERSIONS):
                 bestimg = img
                 bestscore = score
         if not bestimg:
-            print("No universal tests image found for {0)!".format(arch))
+            print("No universal tests image found for {0}!".format(arch))
             continue
         print("Running universal tests for {0} with {1}!".format(
             arch, bestimg.desc))
