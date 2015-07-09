@@ -1,4 +1,3 @@
-import requests
 import argparse
 import sys
 import time
@@ -6,25 +5,26 @@ import logging
 import conf_test_suites
 
 from operator import attrgetter
+from openqa_client.client import OpenQA_Client
 from wikitcms.wiki import Wiki, ResTuple
 
-API_ROOT = "http://localhost/api/v1"
 SLEEPTIME = 60
 logger = logging.getLogger(__name__)
 
 
-def get_passed_testcases(job_ids):
+def get_passed_testcases(job_ids, client):
     """
     job_ids ~ list of int (job ids)
     Returns ~ list of str - names of passed testcases
     """
-    running_jobs = dict([(job_id, "%s/jobs/%s" % (API_ROOT, job_id)) for job_id in job_ids])
+    running_jobs = dict([(job_id, "jobs/%s" % job_id) for job_id in job_ids])
     logger.info("running jobs: %s", running_jobs)
     finished_jobs = {}
 
     while running_jobs:
         for job_id, url in running_jobs.items():
-            job_state = requests.get(url).json()['job']
+            output = client.openqa_request('GET', url)
+            job_state = output['job']
             if job_state['state'] == 'done':
                 logger.info("job %s is done", job_id)
                 finished_jobs[job_id] = job_state
@@ -36,7 +36,7 @@ def get_passed_testcases(job_ids):
     passed_testcases = set()
     for job_id in job_ids:
         job = finished_jobs[job_id]
-        if job['result'] =='passed':
+        if job['result'] == 'passed':
             (release, milestone, compose) = job['settings']['BUILD'].split('_')
             testsuite = job['settings']['TEST']
             arch = job['settings']['ARCH']
@@ -60,8 +60,8 @@ def get_passed_testcases(job_ids):
 
     return sorted(list(passed_testcases), key=attrgetter('testcase'))
 
-def report_results(job_ids, verbose=False, report=True):
-    passed_testcases = get_passed_testcases(job_ids)
+def report_results(job_ids, client, verbose=False, report=True):
+    passed_testcases = get_passed_testcases(job_ids, client)
     if verbose:
         for restup in passed_testcases:
             print restup
@@ -96,4 +96,5 @@ if __name__ == "__main__":
     parser.add_argument('--report', default=False, action='store_true')
 
     args = parser.parse_args()
-    report_results(args.jobs, verbose=True, report=args.report)
+    client = OpenQA_Client()  # uses first server from ~/.config/openqa/client.conf
+    report_results(args.jobs, client, verbose=True, report=args.report)
