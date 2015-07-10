@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
 import json
-import re
 import urlgrabber
 import os.path
 import sys
-import subprocess
 import argparse
 import datetime
 import logging
@@ -16,13 +14,11 @@ except ImportError:
     wikitcms = None
 import fedfind.release
 
+from openqa_client.client import OpenQA_Client
 from report_job_results import report_results
 
 PERSISTENT = "/var/tmp/openqa_watcher.json"
 ISO_PATH = "/var/lib/openqa/factory/iso/"
-RUN_COMMAND = "/var/lib/openqa/script/client isos post " \
-              "ISO=%s DISTRI=fedora VERSION=rawhide FLAVOR=%s ARCH=%s BUILD=%s"
-DOCKER_COMMAND = "docker exec %s " + RUN_COMMAND
 ARCHES = ['i386', 'x86_64']
 
 
@@ -69,46 +65,35 @@ def download_image(image):
     return isoname
 
 
-def run_openqa_jobs(isoname, flavor, arch, build, docker_container):
+def run_openqa_jobs(client, isoname, flavor, arch, build):
     """# run OpenQA 'isos' job on selected isoname, with given arch
-    and a version string. If provided, use docker container docker_container
-    that includes OpenQA WebUI. **NOTE**: the version passed to OpenQA as
+    and a version string. **NOTE**: the version passed to OpenQA as
     BUILD and is parsed back into the 'relval report-auto' arguments
     by report_job_results.py; it is expected to be in the form of a
     3-tuple on which join('_') has been run, and the three elements
     will be passed as --release, --compose and --milestone. Returns
     list of job IDs.
     """
-    if docker_container:
-        command = DOCKER_COMMAND % (docker_container, isoname, flavor, arch, build)
-    else:
-        command = RUN_COMMAND % (isoname, flavor, arch, build)
-
-    logging.info("executing: %s", command)
+    logging.info("sending jobs on OpenQA")
 
     # starts OpenQA jobs
-    output = subprocess.check_output(command.split())
+    params = {
+        'ISO': isoname,
+        'DISTRI': 'fedora',
+        'VERSION': 'rawhide',  # TODO
+        'FLAVOR': flavor,
+        'ARCH': arch,
+        'BUILD': build
+    }
+    output = client.openqa_request('POST', 'isos', params)
 
-    logging.debug("command executed")
+    logging.debug("executed")
+    logging.info("planned jobs: %s", output["ids"])
 
-    # read ids from OpenQA to wait for
-    r = re.compile(r'ids => \[(?P<from>\d+)( \.\. (?P<to>\d+))?\]')
-    match = r.search(output)
-    if match and match.group('to'):
-        from_i = int(match.group('from'))
-        to_i = int(match.group('to')) + 1
-        logging.info("planned jobs: %d to %d", from_i, to_i - 1)
-        return range(from_i, to_i)
-    elif match:
-        job_id = int(match.group('from'))
-        logging.info("planned job: %d", job_id)
-        return [job_id]
-    else:
-        logging.info("no planned jobs")
-        return []
+    return output["ids"]
 
 
-def jobs_from_current(wiki, docker_container):
+def jobs_from_current(wiki, client):
     """Schedule jobs against the 'current' release validation event
     (according to wikitcms) if we have not already. Returns a tuple,
     first value is the job list, second is the current event.
@@ -133,7 +118,7 @@ def jobs_from_current(wiki, docker_container):
     jobs = []
 
     try:
-        jobs = jobs_from_fedfind(currev.ff_release, runarches, docker_container)
+        jobs = jobs_from_fedfind(currev.ff_release, client, runarches)
         logging.info("planned jobs: %s", jobs)
 
         # write info about latest versions
@@ -147,7 +132,7 @@ def jobs_from_current(wiki, docker_container):
     return (jobs, currev)
 
 
-def jobs_from_fedfind(ff_release, arches=ARCHES, docker_container=None):
+def jobs_from_fedfind(ff_release, client, arches=ARCHES):
     """Given a fedfind.Release object, find the ISOs we want and run
     jobs on them. arches is an iterable of arches to run on, if not
     specified, we'll use our constant.
@@ -203,14 +188,14 @@ def jobs_from_fedfind(ff_release, arches=ARCHES, docker_container=None):
             continue
         logging.info("running universal tests for %s with %s", arch, bestimg.desc)
         isoname = download_image(bestimg)
-        job_ids = run_openqa_jobs(isoname, 'universal', arch, build, docker_container)
+        job_ids = run_openqa_jobs(client, isoname, 'universal', arch, build)
         jobs.extend(job_ids)
 
     # Now schedule per-image jobs.
     for image in images:
         isoname = download_image(image)
         flavor = '_'.join((image.payload, image.imagetype))
-        job_ids = run_openqa_jobs(isoname, flavor, image.arch, build, docker_container)
+        job_ids = run_openqa_jobs(client, isoname, flavor, image.arch, build)
         jobs.extend(job_ids)
     return jobs
 
@@ -218,21 +203,21 @@ def jobs_from_fedfind(ff_release, arches=ARCHES, docker_container=None):
 # SUB-COMMAND FUNCTIONS
 
 
-def run_current(args, wiki):
+def run_current(args, client, wiki):
     """run OpenQA for current release validation event, if we have
     not already done it.
     """
     logging.info("running on current release")
-    jobs, _ = jobs_from_current(wiki, args.docker_container)
+    jobs, _ = jobs_from_current(wiki, client)
     # wait for jobs to finish and display results
     if jobs:
         logging.info("waiting for jobs: %s", jobs)
-        report_results(jobs)
+        report_results(jobs, client)
     logging.debug("finished")
     sys.exit()
 
 
-def run_compose(args, wiki=None):
+def run_compose(args, client, wiki=None):
     """run OpenQA on a specified compose, optionally reporting results
     if a matching wikitcms ValidationEvent is found by relval/wikitcms
     """
@@ -251,19 +236,19 @@ def run_compose(args, wiki=None):
     jobs = []
     try:
         if args.arch:
-            jobs = jobs_from_fedfind(ff_release, [args.arch], args.docker_container)
+            jobs = jobs_from_fedfind(ff_release, client, [args.arch])
         else:
-            jobs = jobs_from_fedfind(ff_release, docker_container=args.docker_container)
+            jobs = jobs_from_fedfind(ff_release, client)
     except TriggerException as e:
         logging.error("cannot run jobs: %s", e)
     logging.info("planned jobs: %s", jobs)
     if args.submit_results:
-        report_results(jobs)
+        report_results(jobs, client)
     logging.debug("finished")
     sys.exit()
 
 
-def run_all(args, wiki=None):
+def run_all(args, client, wiki=None):
     """Do everything we can: test current validation event compose if
     it's new, amd test both Rawhide and Branched nightlies if they
     exist and aren't the same as the 'current' compose.
@@ -273,7 +258,7 @@ def run_all(args, wiki=None):
 
     # Run for 'current' validation event.
     logging.debug("running for current")
-    (jobs, currev) = jobs_from_current(wiki, args.docker_container)
+    (jobs, currev) = jobs_from_current(wiki, client)
     logging.info("jobs from current validation event: %s", jobs)
 
     utcdate = datetime.datetime.utcnow()
@@ -290,7 +275,7 @@ def run_all(args, wiki=None):
         try:
             logging.debug("running for rawhide")
             rawhide_ffrel = fedfind.release.get_release(release='Rawhide', compose=utcdate)
-            rawjobs = jobs_from_fedfind(rawhide_ffrel, docker_container=args.docker_container)
+            rawjobs = jobs_from_fedfind(rawhide_ffrel, client)
             logging.info("jobs from rawhide %s: %s", rawhide_ffrel.version, rawjobs)
             jobs.extend(rawjobs)
         except ValueError as err:
@@ -307,7 +292,7 @@ def run_all(args, wiki=None):
             logging.debug("running for branched")
             branched_ffrel = fedfind.release.get_release(release=currev.release,
                                                          milestone='Branched', compose=utcdate)
-            branchjobs = jobs_from_fedfind(branched_ffrel, docker_container=args.docker_container)
+            branchjobs = jobs_from_fedfind(branched_ffrel, client)
             logging.info("jobs from %s: %s", branched_ffrel.version, branchjobs)
             jobs.extend(branchjobs)
         except ValueError as err:
@@ -316,7 +301,7 @@ def run_all(args, wiki=None):
             logging.error("cannot run jobs: %s", e)
     if jobs:
         logging.info("waiting for jobs: %s", jobs)
-        report_results(jobs)
+        report_results(jobs, client)
     logging.debug("finished")
     sys.exit()
 
@@ -367,9 +352,6 @@ if __name__ == "__main__":
     parser_all.set_defaults(func=run_all)
 
     parser.add_argument(
-        '-d', '--docker-container', help="If given, run tests using "
-        "specified docker container")
-    parser.add_argument(
         '-t', '--test', help=test_help, required=False, action='store_true')
     parser.add_argument(
         '-f', '--log-file', help="If given, log into specified file. When not provided, stdout"
@@ -408,4 +390,7 @@ if __name__ == "__main__":
             wiki = wikitcms.wiki.Wiki(('https', 'fedoraproject.org'), '/w/')
         else:
             logging.warn("wikitcms not found, reporting to wiki disabled")
-    args.func(args, wiki)
+
+    client = OpenQA_Client()  # uses first server from ~/.config/openqa/client.conf
+
+    args.func(args, client, wiki)
