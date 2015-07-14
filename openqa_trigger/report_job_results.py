@@ -30,7 +30,7 @@ def get_passed_testcases(job_ids, client):
                 finished_jobs[job_id] = job_state
                 del running_jobs[job_id]
         if running_jobs:
-           time.sleep(SLEEPTIME)
+            time.sleep(SLEEPTIME)
     logger.info("all jobs finished")
 
     passed_testcases = set()
@@ -43,22 +43,24 @@ def get_passed_testcases(job_ids, client):
             flavor = job['settings']['FLAVOR']
 
             for testcase in conf_test_suites.TESTSUITES[testsuite]:
-                # each 'testsuite' is a list using testcase names to indicate which Wikitcms tests have
-                # passed if this job passes. Each testcase name is the name of a dict in the TESTCASES
-                # dict-of-dicts which more precisely identifies the 'test instance' (when there is more
-                # than one for a testcase) and environment for which the result should be filed.
+                # each 'testsuite' is a list using testcase names to indicate which Wikitcms tests
+                # have passed if this job passes. Each testcase name is the name of a dict in the
+                # TESTCASES dict-of-dicts which more precisely identifies the 'test instance' (when
+                # there is more than one for a testcase) and environment for which the result
+                # should be filed.
                 uniqueres = conf_test_suites.TESTCASES[testcase]
                 testname = ''
                 if 'name_cb' in uniqueres:
                     testname = uniqueres['name_cb'](flavor)
                 env = arch if uniqueres['env'] == '$RUNARCH$' else uniqueres['env']
                 result = ResTuple(
-                    testtype=uniqueres['type'], release=release, milestone=milestone, compose=compose,
-                    testcase=testcase, section=uniqueres['section'], testname=testname, env=env, status='pass',
-                    bot=True)
+                    testtype=uniqueres['type'], release=release, milestone=milestone,
+                    compose=compose, testcase=testcase, section=uniqueres['section'],
+                    testname=testname, env=env, status='pass', bot=True)
                 passed_testcases.add(result)
 
     return sorted(list(passed_testcases), key=attrgetter('testcase'))
+
 
 def report_results(job_ids, client, verbose=False, report=True):
     passed_testcases = get_passed_testcases(job_ids, client)
@@ -91,7 +93,8 @@ def report_results(job_ids, client, verbose=False, report=True):
         logger.warning("no reporting is done")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Evaluate per-testcase results from OpenQA job runs")
+    parser = argparse.ArgumentParser(description="Evaluate per-testcase results from OpenQA job "
+                                     "runs")
     parser.add_argument('jobs', type=int, nargs='+')
     parser.add_argument('--report', default=False, action='store_true')
 
