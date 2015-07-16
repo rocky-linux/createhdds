@@ -44,6 +44,31 @@ send "poweroff\r"
 expect "reboot: Power down"
 _EOF_
 
+echo "Creating disk_f21_desktop.img..."
+# these steps are required
+# 1. remove firewalld - firewalld configuration in minimal and desktop are conflicting
+# 2. update fedora
+# 3. install @Fedora Workstation group
+# 4. add new user on first boot
+# 5. use expect to do selinux relabelling and to set password for user
+virt-builder fedora-21 -o disk_f21_desktop.img --size 10G --run-command "yum -y remove firewalld*" --update --selinux-relabel --install "@^workstation-product-environment" --root-password password:weakpassword --firstboot-command 'useradd -m -p "" ejohn' > /dev/null
+expect <<_EOF_
+log_user 0
+set timeout -1
+
+spawn qemu-kvm -m 2G -nographic disk_f21_desktop.img
+
+expect "localhost login:"
+send "root\r"
+expect "Password:"
+send "weakpassword\r"
+expect "~]#"
+send "systemctl set-default graphical.target\r"
+send "echo 'ejohn:weakpassword' | chpasswd\r"
+send "poweroff\r"
+expect "reboot: Power down"
+_EOF_
+
 echo "Creating disk_ks.img..."
 curl --silent -o "/tmp/root-user-crypted-net.ks" "https://jskladan.fedorapeople.org/kickstarts/root-user-crypted-net.ks" > /dev/null
 guestfish <<_EOF_
