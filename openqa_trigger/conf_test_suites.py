@@ -129,6 +129,11 @@ TESTCASES = {
         "env": "x86 BIOS",
         "type": "Installation",
     },
+    "QA:Testcase_upgrade_fedup_cli_previous_workstation": {
+        "section": "Upgrade",
+        "env": "x86 BIOS",
+        "type": "Installation",
+    },
     #        "": {
     # "name_cb": callbackfunc # optional, called with 'flavor'
     #            "section": "",
@@ -257,5 +262,8 @@ TESTSUITES = {
         ],
     "fedup_minimal": [
         "QA:Testcase_upgrade_fedup_cli_previous_minimal",
+        ],
+    "fedup_desktop": [
+        "QA:Testcase_upgrade_fedup_cli_previous_workstation",
         ],
     }
