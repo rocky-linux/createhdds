@@ -19,7 +19,8 @@ from report_job_results import report_results
 
 PERSISTENT = "/var/tmp/openqa_watcher.json"
 ISO_PATH = "/var/lib/openqa/factory/iso/"
-ARCHES = ['i386', 'x86_64']
+# We're not really setup to test 32-bit yet. Add 'i386' when we are.
+ARCHES = ['x86_64']
 
 
 class TriggerException(Exception):
