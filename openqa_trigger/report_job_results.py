@@ -85,7 +85,7 @@ def report_results(job_ids, client, verbose=False, report=True):
             tmpl = "already reported result for test %s, env %s! Will not report dupe."
             if verbose:
                 print tmpl % (dupe.testcase, dupe.env)
-            logger.info(tmpl, dupe.testcases, dupe.env)
+            logger.info(tmpl, dupe.testcase, dupe.env)
 
     else:
         if verbose:
