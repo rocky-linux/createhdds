@@ -367,9 +367,9 @@ if __name__ == "__main__":
     if args.log_level:
         log_level = getattr(logging, args.log_level.upper(), None)
         if not isinstance(log_level, int):
-            log_level = logging.WARNING
+            log_level = logging.INFO
     else:
-        log_level = logging.WARNING
+        log_level = logging.INFO
     if args.log_file:
         logging.basicConfig(format="%(levelname)s:%(name)s:%(asctime)s:%(message)s",
                             filename=args.log_file, level=log_level)
