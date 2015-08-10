@@ -25,7 +25,7 @@ def get_passed_testcases(job_ids, client):
         for job_id, url in running_jobs.items():
             output = client.openqa_request('GET', url)
             job_state = output['job']
-            if job_state['state'] == 'done':
+            if job_state['state'] in ('done', 'cancelled'):
                 logger.info("job %s is done", job_id)
                 finished_jobs[job_id] = job_state
                 del running_jobs[job_id]
