@@ -120,7 +120,7 @@ def jobs_from_current(wiki, client):
 
     try:
         jobs = jobs_from_fedfind(currev.ff_release, client, runarches)
-        logging.info("planned jobs: %s", ' '.join(jobs))
+        logging.info("planned jobs: %s", ' '.join(str(j) for j in jobs))
 
         # write info about latest versions
         f = open(PERSISTENT, "w")
@@ -212,7 +212,7 @@ def run_current(args, client, wiki):
     jobs, _ = jobs_from_current(wiki, client)
     # wait for jobs to finish and display results
     if jobs:
-        logging.info("waiting for jobs: %s", ' '.join(jobs))
+        logging.info("waiting for jobs: %s", ' '.join(str(j) for j in jobs))
         report_results(jobs, client)
     logging.debug("finished")
     sys.exit()
@@ -242,7 +242,7 @@ def run_compose(args, client, wiki=None):
             jobs = jobs_from_fedfind(ff_release, client)
     except TriggerException as e:
         logging.error("cannot run jobs: %s", e)
-    logging.info("planned jobs: %s", ' '.join(jobs))
+    logging.info("planned jobs: %s", ' '.join(str(j) for j in jobs))
     if args.submit_results:
         report_results(jobs, client)
     logging.debug("finished")
@@ -260,7 +260,7 @@ def run_all(args, client, wiki=None):
     # Run for 'current' validation event.
     logging.debug("running for current")
     (jobs, currev) = jobs_from_current(wiki, client)
-    logging.info("jobs from current validation event: %s", ' '.join(jobs))
+    logging.info("jobs from current validation event: %s", ' '.join(str(j) for j in jobs))
 
     utcdate = datetime.datetime.utcnow()
     if args.yesterday:
@@ -277,7 +277,7 @@ def run_all(args, client, wiki=None):
             logging.debug("running for rawhide")
             rawhide_ffrel = fedfind.release.get_release(release='Rawhide', compose=utcdate)
             rawjobs = jobs_from_fedfind(rawhide_ffrel, client)
-            logging.info("jobs from rawhide %s: %s", rawhide_ffrel.version, ' '.join(rawjobs))
+            logging.info("jobs from rawhide %s: %s", rawhide_ffrel.version, ' '.join(str(j) for j in rawjobs))
             jobs.extend(rawjobs)
         except ValueError as err:
             logging.error("rawhide image discovery failed: %s", err)
@@ -294,7 +294,7 @@ def run_all(args, client, wiki=None):
             branched_ffrel = fedfind.release.get_release(release=currev.release,
                                                          milestone='Branched', compose=utcdate)
             branchjobs = jobs_from_fedfind(branched_ffrel, client)
-            logging.info("jobs from %s: %s", branched_ffrel.version, ' '.join(branchjobs))
+            logging.info("jobs from %s: %s", branched_ffrel.version, ' '.join(str(j) for j in branchjobs))
             jobs.extend(branchjobs)
         except ValueError as err:
             logging.error("branched image discovery failed: %s", err)
