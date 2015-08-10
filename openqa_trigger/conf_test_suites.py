@@ -114,7 +114,22 @@ TESTCASES = {
         "env": "x86 BIOS",
         "type": "Installation",
     },
-    "QA:Testcase_Partitioning_On_Software_RAID": {
+    "QA:Testcase_partitioning_custom_software_RAID": {
+        "section": "Custom storage configuration",
+        "env": "x86 BIOS",
+        "type": "Installation",
+    },
+    "QA:Testcase_partitioning_custom_btrfs": {
+        "section": "Custom storage configuration",
+        "env": "x86 BIOS",
+        "type": "Installation",
+    },
+    "QA:Testcase_partitioning_custom_lvmthin": {
+        "section": "Custom storage configuration",
+        "env": "x86 BIOS",
+        "type": "Installation",
+    },
+    "QA:Testcase_partitioning_custom_standard_partition_ext3": {
         "section": "Custom storage configuration",
         "env": "x86 BIOS",
         "type": "Installation",
@@ -249,7 +264,7 @@ TESTSUITES = {
         ],
     "server_software_raid": [
         "QA:Testcase_install_to_VirtIO",
-        "QA:Testcase_Partitioning_On_Software_RAID",
+        "QA:Testcase_partitioning_custom_software_RAID",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
@@ -265,5 +280,26 @@ TESTSUITES = {
         ],
     "fedup_desktop": [
         "QA:Testcase_upgrade_fedup_cli_previous_workstation",
+        ],
+    "server_btrfs": [
+        "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_partitioning_custom_btrfs",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_Package_Sets_Minimal_Package_Install",
+        ],
+    "server_lvmthin": [
+        "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_partitioning_custom_lvmthin",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_Package_Sets_Minimal_Package_Install",
+        ],
+    "server_ext3": [
+        "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_partitioning_custom_standard_partition_ext3",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_Package_Sets_Minimal_Package_Install",
         ],
     }
