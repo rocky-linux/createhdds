@@ -91,12 +91,27 @@ upload /tmp/root-user-crypted-net.ks /root-user-crypted-net.ks
 _EOF_
 }
 
+function disk_updates_img {
+echo "Creating disk_updates_img.img..."
+curl --silent -o "/tmp/updates.img" "https://fedorapeople.org/groups/qa/updates/updates-unipony.img" > /dev/null
+guestfish <<_EOF_
+sparse disk_updates_img.img 100MB
+run
+part-init /dev/sda mbr
+part-add /dev/sda p 4096 -1
+mkfs ext4 /dev/sda1 label:UPDATES_IMG
+mount /dev/sda1 /
+upload /tmp/updates.img /updates.img
+_EOF_
+}
+
 if [ "$#" -eq 0 ]; then
     disk_full
     disk_freespace
     disk_f22_minimal
     disk_f22_desktop
     disk_ks
+    disk_updates_img
 else
     case $1 in
         full)
@@ -114,8 +129,11 @@ else
         ks)
             disk_ks
             ;;
+        updates)
+            disk_updates_img
+            ;;
         *)
-            echo "$0 [full|freespace|minimal|desktop|ks]"
+            echo "$0 [full|freespace|minimal|desktop|ks|updates]"
             ;;
     esac
 fi
