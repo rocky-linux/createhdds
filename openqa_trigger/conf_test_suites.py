@@ -149,6 +149,11 @@ TESTCASES = {
         "env": "x86 BIOS",
         "type": "Installation",
     },
+    "QA:Testcase_Anaconda_updates.img_via_local_media": {
+        "section": "Miscellaneous",
+        "env": "Result",
+        "type": "Installation",
+    },
     #        "": {
     # "name_cb": callbackfunc # optional, called with 'flavor'
     #            "section": "",
@@ -298,6 +303,13 @@ TESTSUITES = {
     "server_ext3": [
         "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_partitioning_custom_standard_partition_ext3",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_Package_Sets_Minimal_Package_Install",
+        ],
+    "server_updates_img_local": [
+        "QA:Testcase_Anaconda_updates.img_via_local_media",
+        "QA:Testcase_install_to_VirtIO",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
