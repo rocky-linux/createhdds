@@ -134,6 +134,11 @@ TESTCASES = {
         "env": "x86 BIOS",
         "type": "Installation",
     },
+    "QA:Testcase_partitioning_custom_no_swap": {
+        "section": "Custom storage configuration",
+        "env": "x86 BIOS",
+        "type": "Installation",
+    },
     "QA:Testcase_Kickstart_Hd_Device_Path_Ks_Cfg": {
         "section": "Kickstart",
         "env": "Result",
@@ -310,6 +315,13 @@ TESTSUITES = {
     "server_updates_img_local": [
         "QA:Testcase_Anaconda_updates.img_via_local_media",
         "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_Anaconda_User_Interface_Graphical",
+        "QA:Testcase_Anaconda_user_creation",
+        "QA:Testcase_Package_Sets_Minimal_Package_Install",
+        ],
+    "server_no_swap": [
+        "QA:Testcase_install_to_VirtIO",
+        "QA:Testcase_partitioning_custom_no_swap",
         "QA:Testcase_Anaconda_User_Interface_Graphical",
         "QA:Testcase_Anaconda_user_creation",
         "QA:Testcase_Package_Sets_Minimal_Package_Install",
