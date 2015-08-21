@@ -80,7 +80,7 @@ def run_openqa_jobs(client, isoname, flavor, arch, build):
     params = {
         'ISO': isoname,
         'DISTRI': 'fedora',
-        'VERSION': 'rawhide',  # TODO
+        'VERSION': build.split('_')[0],
         'FLAVOR': flavor,
         'ARCH': arch,
         'BUILD': build
