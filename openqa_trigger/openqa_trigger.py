@@ -7,6 +7,7 @@ import sys
 import argparse
 import datetime
 import logging
+import time
 # We can at least find images and run OpenQA jobs without wikitcms
 try:
     import wikitcms.wiki
@@ -95,8 +96,8 @@ def run_openqa_jobs(client, isoname, flavor, arch, build):
 
 def jobs_from_current(wiki, client):
     """Schedule jobs against the 'current' release validation event
-    (according to wikitcms) if we have not already. Returns a tuple,
-    first value is the job list, second is the current event.
+    (according to wikitcms) if we have not already. Returns the job
+    list.
     """
     if not wiki:
         logging.warning("python-wikitcms is required for current validation event discovery.")
@@ -129,7 +130,7 @@ def jobs_from_current(wiki, client):
     except TriggerException as e:
         logging.error("cannot run jobs: %s", e)
 
-    return (jobs, currev)
+    return jobs
 
 
 def jobs_from_fedfind(ff_release, client, arches=ARCHES):
@@ -208,7 +209,7 @@ def run_current(args, client, wiki):
     not already done it.
     """
     logging.info("running on current release")
-    jobs, _ = jobs_from_current(wiki, client)
+    jobs = jobs_from_current(wiki, client)
     # wait for jobs to finish and display results
     if jobs:
         logging.info("waiting for jobs: %s", ' '.join(str(j) for j in jobs))
@@ -233,6 +234,30 @@ def run_compose(args, client, wiki=None):
         sys.exit(err[0])
 
     logging.info("running on compose: %s", ff_release.version)
+
+    if args.ifnotcurrent:
+        try:
+            currev = wiki.current_event
+            # Compare currev's fedfind release version with ours
+            if currev.ff_release.version == ff_release.version:
+                logging.info("Compose is the current validation compose. Exiting.")
+                sys.exit()
+        except AttributeError:
+            sys.exit("Wikitcms is required for --ifnotcurrent.")
+
+    if args.wait:
+        logging.info("Waiting up to %s mins for compose", str(args.wait))
+        waitstart = time.time()
+        while True:
+            if time.time() - waitstart > args.wait * 60:
+                sys.exit("Wait timer expired! No jobs run.")
+            logging.debug("Checking for compose...")
+            if ff_release.koji_done and ff_release.pungi_done:
+                logging.info("Compose complete! Scheduling jobs.")
+                break
+            else:
+                time.sleep(120)
+
     jobs = []
     try:
         if args.arch:
@@ -243,64 +268,6 @@ def run_compose(args, client, wiki=None):
         logging.error("cannot run jobs: %s", e)
     logging.info("planned jobs: %s", ' '.join(str(j) for j in jobs))
     if args.submit_results:
-        report_results(jobs, client)
-    logging.debug("finished")
-    sys.exit()
-
-
-def run_all(args, client, wiki=None):
-    """Do everything we can: test current validation event compose if
-    it's new, amd test both Rawhide and Branched nightlies if they
-    exist and aren't the same as the 'current' compose.
-    """
-    skip = ''
-    logging.info("running all")
-
-    # Run for 'current' validation event.
-    logging.debug("running for current")
-    (jobs, currev) = jobs_from_current(wiki, client)
-    logging.info("jobs from current validation event: %s", ' '.join(str(j) for j in jobs))
-
-    utcdate = datetime.datetime.utcnow()
-    if args.yesterday:
-        utcdate = utcdate - datetime.timedelta(days=1)
-    if currev and currev.compose == utcdate.strftime('%Y%m%d'):
-        # Don't schedule tests for the same compose as both "today's
-        # nightly" and "current validation event"
-        skip = currev.milestone
-        logging.debug("skipping %s because it's both today's and current validation event", skip)
-
-    # Run for day's Rawhide nightly (if not same as current event.)
-    if skip.lower() != 'rawhide':
-        try:
-            logging.debug("running for rawhide")
-            rawhide_ffrel = fedfind.release.get_release(release='Rawhide', compose=utcdate)
-            rawjobs = jobs_from_fedfind(rawhide_ffrel, client)
-            logging.info("jobs from rawhide %s: %s", rawhide_ffrel.version, ' '.join(str(j) for j in rawjobs))
-            jobs.extend(rawjobs)
-        except ValueError as err:
-            logging.error("rawhide image discovery failed: %s", err)
-        except TriggerException as e:
-            logging.error("cannot run jobs: %s", e)
-
-    # Run for day's Branched nightly (if not same as current event.)
-    # We must guess a release for Branched, fedfind cannot do so. Best
-    # guess we can make is the same as the 'current' validation event
-    # compose (this is why we have jobs_from_current return currev).
-    if skip.lower() != 'branched':
-        try:
-            logging.debug("running for branched")
-            branched_ffrel = fedfind.release.get_release(release=currev.release,
-                                                         milestone='Branched', compose=utcdate)
-            branchjobs = jobs_from_fedfind(branched_ffrel, client)
-            logging.info("jobs from %s: %s", branched_ffrel.version, ' '.join(str(j) for j in branchjobs))
-            jobs.extend(branchjobs)
-        except ValueError as err:
-            logging.error("branched image discovery failed: %s", err)
-        except TriggerException as e:
-            logging.error("cannot run jobs: %s", e)
-    if jobs:
-        logging.info("waiting for jobs: %s", jobs)
         report_results(jobs, client)
     logging.debug("finished")
     sys.exit()
@@ -340,16 +307,16 @@ if __name__ == "__main__":
         '-s', '--submit-results', help="Submit the results to the release "
         "validation event for this compose, if possible", required=False,
         action='store_true')
+    parser_compose.add_argument(
+        '-w', '--wait', help="Wait NN minutes for the compose to appear, if "
+        "it doesn't yet exist", type=int, metavar="NN", default=0,
+        required=False)
+    parser_compose.add_argument(
+        '-i', '--ifnotcurrent', help="Only run if the compose is not the "
+        "'current' validation compose. Mainly intended for cron runs on "
+        "nightly builds, to avoid duplicating jobs run by a 'current' "
+        "cron job. Requires wikitcms", action='store_true')
     parser_compose.set_defaults(func=run_compose)
-
-    parser_all = subparsers.add_parser(
-        'all', description="Run for the current validation event (if needed) "
-        "and today's Rawhide and Branched nightly's (if found). 'Today' is "
-        "calculated for the UTC time zone, no matter the system timezone.")
-    parser_all.add_argument(
-        '-y', '--yesterday', help="Run on yesterday's nightlies, not today's",
-        required=False, action='store_true')
-    parser_all.set_defaults(func=run_all)
 
     parser.add_argument(
         '-t', '--test', help=test_help, required=False, action='store_true')
