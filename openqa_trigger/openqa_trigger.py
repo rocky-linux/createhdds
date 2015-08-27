@@ -13,6 +13,7 @@ try:
     import wikitcms.wiki
 except ImportError:
     wikitcms = None
+import fedfind.exceptions
 import fedfind.release
 
 from openqa_client.client import OpenQA_Client
@@ -247,16 +248,10 @@ def run_compose(args, client, wiki=None):
 
     if args.wait:
         logging.info("Waiting up to %s mins for compose", str(args.wait))
-        waitstart = time.time()
-        while True:
-            if time.time() - waitstart > args.wait * 60:
-                sys.exit("Wait timer expired! No jobs run.")
-            logging.debug("Checking for compose...")
-            if ff_release.koji_done and ff_release.pungi_done:
-                logging.info("Compose complete! Scheduling jobs.")
-                break
-            else:
-                time.sleep(120)
+        try:
+            ff_release.wait(waittime=args.wait)
+        except fedfind.exceptions.WaitError:
+            sys.exit("Waited too long for compose to appear!")
 
     jobs = []
     try:
