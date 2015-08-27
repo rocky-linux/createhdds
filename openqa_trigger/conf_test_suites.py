@@ -285,10 +285,16 @@ TESTSUITES = {
         "QA:Testcase_kickstart_user_creation",
         "QA:Testcase_Kickstart_Hd_Device_Path_Ks_Cfg",
         ],
-    "fedup_minimal": [
+    "fedup_minimal_64bit": [
         "QA:Testcase_upgrade_fedup_cli_previous_minimal",
         ],
-    "fedup_desktop": [
+    "fedup_desktop_64bit": [
+        "QA:Testcase_upgrade_fedup_cli_previous_workstation",
+        ],
+    "fedup_minimal_32bit": [
+        "QA:Testcase_upgrade_fedup_cli_previous_minimal",
+        ],
+    "fedup_desktop_32bit": [
         "QA:Testcase_upgrade_fedup_cli_previous_workstation",
         ],
     "server_btrfs": [
