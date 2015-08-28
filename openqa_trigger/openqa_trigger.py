@@ -119,17 +119,17 @@ def jobs_from_current(wiki, client):
 
     jobs = []
 
-    try:
-        jobs = jobs_from_fedfind(currev.ff_release, client, runarches)
-        logging.info("planned jobs: %s", ' '.join(str(j) for j in jobs))
+    if not runarches:
+        raise TriggerException("Skipped all arches, nothing to do.")
 
-        # write info about latest versions
-        f = open(PERSISTENT, "w")
-        f.write(json.dumps(json_parsed))
-        f.close()
-        logging.debug("written info about newest version")
-    except TriggerException as e:
-        logging.error("cannot run jobs: %s", e)
+    jobs = jobs_from_fedfind(currev.ff_release, client, runarches)
+    logging.info("planned jobs: %s", ' '.join(str(j) for j in jobs))
+
+    # write info about latest versions
+    f = open(PERSISTENT, "w")
+    f.write(json.dumps(json_parsed))
+    f.close()
+    logging.debug("written info about newest version")
 
     return jobs
 
@@ -210,7 +210,11 @@ def run_current(args, client, wiki):
     not already done it.
     """
     logging.info("running on current release")
-    jobs = jobs_from_current(wiki, client)
+    try:
+        jobs = jobs_from_current(wiki, client)
+    except TriggerException as e:
+        logging.debug("No jobs run: %s", e)
+        sys.exit(1)
     # wait for jobs to finish and display results
     if jobs:
         logging.info("waiting for jobs: %s", ' '.join(str(j) for j in jobs))
@@ -260,7 +264,8 @@ def run_compose(args, client, wiki=None):
         else:
             jobs = jobs_from_fedfind(ff_release, client)
     except TriggerException as e:
-        logging.error("cannot run jobs: %s", e)
+        logging.debug("No jobs run: %s", e)
+        sys.exit(1)
     logging.info("planned jobs: %s", ' '.join(str(j) for j in jobs))
     if args.submit_results:
         report_results(jobs, client)
