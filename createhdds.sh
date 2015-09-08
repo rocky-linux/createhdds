@@ -1,9 +1,10 @@
 #!/bin/bash
 
 function disk_full {
-echo "Creating disk_full.img..."
+diskname="disk_full"
+echo "Creating $diskname.img..."
 guestfish <<_EOF_
-sparse disk_full.img 10G
+sparse $diskname.img 10G
 run
 part-init /dev/sda mbr
 part-add /dev/sda p 1 10485760
@@ -20,9 +21,10 @@ _EOF_
 }
 
 function disk_freespace {
-echo "Creating disk_freespace.img..."
+diskname="disk_freespace"
+echo "Creating $diskname.img..."
 guestfish <<_EOF_
-sparse disk_freespace.img 10G
+sparse $diskname.img 10G
 run
 part-init /dev/sda mbr
 part-add /dev/sda p 4096 2097152
@@ -86,10 +88,11 @@ _EOF_
 }
 
 function disk_ks {
-echo "Creating disk_ks.img..."
+diskname="disk_ks"
+echo "Creating $diskname.img..."
 curl --silent -o "/tmp/root-user-crypted-net.ks" "https://jskladan.fedorapeople.org/kickstarts/root-user-crypted-net.ks" > /dev/null
 guestfish <<_EOF_
-sparse disk_ks.img 100MB
+sparse $diskname.img 100MB
 run
 part-init /dev/sda mbr
 part-add /dev/sda p 4096 -1
@@ -100,16 +103,32 @@ _EOF_
 }
 
 function disk_updates_img {
-echo "Creating disk_updates_img.img..."
+diskname="disk_updates_img"
+echo "Creating $diskname.img..."
 curl --silent -o "/tmp/updates.img" "https://fedorapeople.org/groups/qa/updates/updates-unipony.img" > /dev/null
 guestfish <<_EOF_
-sparse disk_updates_img.img 100MB
+sparse $diskname.img 100MB
 run
 part-init /dev/sda mbr
 part-add /dev/sda p 4096 -1
 mkfs ext4 /dev/sda1 label:UPDATES_IMG
 mount /dev/sda1 /
 upload /tmp/updates.img /updates.img
+_EOF_
+}
+
+function disk_shrink {
+fstype=$1
+diskname="disk_shrink_$fstype"
+echo "Creating $diskname.img..."
+guestfish <<_EOF_
+sparse $diskname.img 10G
+run
+part-init /dev/sda mbr
+part-add /dev/sda p 4096 -1
+mkfs $fstype /dev/sda1
+mount /dev/sda1 /
+write /testfile "Hello, world!"
 _EOF_
 }
 
@@ -125,6 +144,8 @@ if [[ "$1" != "" ]]; then
         disk_desktop ${VERSION} "i686"
         disk_ks
         disk_updates_img
+        disk_shrink "ext4"
+        disk_shrink "ntfs"
     else
         case $1 in
             full)
@@ -151,13 +172,19 @@ if [[ "$1" != "" ]]; then
             updates)
                 disk_updates_img
                 ;;
+            shrink_ext4)
+                disk_shrink "ext4"
+                ;;
+            shrink_ntfs)
+                disk_shrink "ntfs"
+                ;;
             *)
-                echo "name not in [full|freespace|minimal_64bit|minimal_32bit|desktop_64bit|desktop_32bit|ks|updates]"
+                echo "name not in [full|freespace|minimal_64bit|minimal_32bit|desktop_64bit|desktop_32bit|ks|updates|shrink_ext4|shrink_ntfs]"
                 exit 1
                 ;;
         esac
     fi
 else
-    echo "USAGE: $0 VERSION [full|freespace|minimal_64bit|minimal_32bit|desktop_64bit|desktop_32bit|ks|updates]"
+    echo "USAGE: $0 VERSION [full|freespace|minimal_64bit|minimal_32bit|desktop_64bit|desktop_32bit|ks|updates|shrink_ext4|shrink_ntfs]"
     exit 1
 fi
