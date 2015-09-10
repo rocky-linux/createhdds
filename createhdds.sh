@@ -38,8 +38,8 @@ function disk_minimal {
 version=$1
 arch=$2
 echo "Creating disk_f${version}_minimal_${arch}.img..."
-virt-builder fedora-${version} -o disk_f${version}_minimal_${arch}.img --arch ${arch} --run-command \
-  "setarch ${arch} dnf -y update" --selinux-relabel --root-password password:weakpassword > /dev/null
+virt-builder fedora-${version} -o disk_f${version}_minimal_${arch}.img --arch ${arch} --update --selinux-relabel \
+  --root-password password:weakpassword > /dev/null
 expect <<_EOF_
 log_user 0
 set timeout -1
@@ -66,9 +66,9 @@ echo "Creating disk_f${version}_desktop_${arch}.img..."
 # 3. install @Fedora Workstation group
 # 4. add new user on first boot
 # 5. use expect to do selinux relabelling and to set password for user
-virt-builder fedora-${version} -o disk_f${version}_desktop_${arch}.img --size 20G --arch ${arch} --run-command \
-  "setarch ${arch} dnf -y remove firewalld* && setarch ${arch} dnf -y update && setarch ${arch} dnf -y install @'Fedora Workstation'" \
-  --selinux-relabel --root-password password:weakpassword --firstboot-command 'useradd -m -p "" ejohn' > /dev/null
+virt-builder fedora-${version} -o disk_f${version}_desktop_${arch}.img --size 20G --arch ${arch} --update \
+  --run-command "dnf -y remove firewalld* && dnf -y install @'Fedora Workstation'" --selinux-relabel \
+  --root-password password:weakpassword --firstboot-command 'useradd -m -p "" ejohn' > /dev/null
 expect <<_EOF_
 log_user 0
 set timeout -1
