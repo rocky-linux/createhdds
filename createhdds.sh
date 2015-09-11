@@ -59,15 +59,21 @@ _EOF_
 function disk_desktop {
 version=$1
 arch=$2
+if [ ${version} -lt 22 ]
+then
+    cmd="yum -y remove firewalld* && yum -y groupinstall 'Fedora Workstation'"
+else
+    cmd="dnf -y groupinstall 'Fedora Workstation'"
+fi
 echo "Creating disk_f${version}_desktop_${arch}.img..."
 # these steps are required
-# 1. remove firewalld - firewalld configuration in minimal and desktop are conflicting
-# 2. update fedora
-# 3. install @Fedora Workstation group
+# 1. update fedora
+# 2. (F<22) remove firewalld - firewalld configuration in minimal and desktop are conflicting
+# 3. install Fedora Workstation group
 # 4. add new user on first boot
-# 5. use expect to do selinux relabelling and to set password for user
+# 5. use expect to set graphical boot target and set password for user
 virt-builder fedora-${version} -o disk_f${version}_desktop_${arch}.img --size 20G --arch ${arch} --update \
-  --run-command "dnf -y remove firewalld* && dnf -y install @'Fedora Workstation'" --selinux-relabel \
+  --run-command "${cmd}" --selinux-relabel \
   --root-password password:weakpassword --firstboot-command 'useradd -m -p "" ejohn' > /dev/null
 expect <<_EOF_
 log_user 0
