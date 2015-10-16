@@ -1,14 +1,15 @@
 #!/bin/bash
 
 function disk_full {
-diskname="disk_full"
-echo "Creating $diskname.img..."
+part_table_type=$1
+diskname="disk_full_${part_table_type}"
+echo "Creating ${diskname}.img..."
 guestfish <<_EOF_
-sparse $diskname.img 10G
+sparse ${diskname}.img 10G
 run
-part-init /dev/sda mbr
-part-add /dev/sda p 1 10485760
-part-add /dev/sda p 10485761 -1
+part-init /dev/sda ${part_table_type}
+part-add /dev/sda p 4096 10485760
+part-add /dev/sda p 10485761 -4097
 mkfs ext4 /dev/sda1
 mkfs ext4 /dev/sda2
 mount /dev/sda1 /
@@ -21,12 +22,13 @@ _EOF_
 }
 
 function disk_freespace {
-diskname="disk_freespace"
-echo "Creating $diskname.img..."
+part_table_type=$1
+diskname="disk_freespace_${part_table_type}"
+echo "Creating ${diskname}.img..."
 guestfish <<_EOF_
-sparse $diskname.img 10G
+sparse ${diskname}.img 10G
 run
-part-init /dev/sda mbr
+part-init /dev/sda ${part_table_type}
 part-add /dev/sda p 4096 2097152
 mkfs ext4 /dev/sda1
 mount /dev/sda1 /
@@ -95,10 +97,10 @@ _EOF_
 
 function disk_ks {
 diskname="disk_ks"
-echo "Creating $diskname.img..."
+echo "Creating ${diskname}.img..."
 curl --silent -o "/tmp/root-user-crypted-net.ks" "https://jskladan.fedorapeople.org/kickstarts/root-user-crypted-net.ks" > /dev/null
 guestfish <<_EOF_
-sparse $diskname.img 100MB
+sparse ${diskname}.img 100MB
 run
 part-init /dev/sda mbr
 part-add /dev/sda p 4096 -1
@@ -110,10 +112,10 @@ _EOF_
 
 function disk_updates_img {
 diskname="disk_updates_img"
-echo "Creating $diskname.img..."
+echo "Creating ${diskname}.img..."
 curl --silent -o "/tmp/updates.img" "https://fedorapeople.org/groups/qa/updates/updates-unipony.img" > /dev/null
 guestfish <<_EOF_
-sparse $diskname.img 100MB
+sparse ${diskname}.img 100MB
 run
 part-init /dev/sda mbr
 part-add /dev/sda p 4096 -1
@@ -125,13 +127,14 @@ _EOF_
 
 function disk_shrink {
 fstype=$1
-diskname="disk_shrink_$fstype"
-echo "Creating $diskname.img..."
+part_table_type=$2
+diskname="disk_shrink_${fstype}_${part_table_type}"
+echo "Creating ${diskname}.img..."
 guestfish <<_EOF_
-sparse $diskname.img 10G
+sparse ${diskname}.img 10G
 run
-part-init /dev/sda mbr
-part-add /dev/sda p 4096 -1
+part-init /dev/sda ${part_table_type}
+part-add /dev/sda p 4096 -4097
 mkfs $fstype /dev/sda1
 mount /dev/sda1 /
 write /testfile "Hello, world!"
@@ -142,23 +145,42 @@ if [[ "$1" != "" ]]; then
     VERSION="$1"
     shift
     if [[ "$#" -eq 0 ]]; then
-        disk_full
-        disk_freespace
+        disk_full "mbr"
+        disk_full "gpt"
+        disk_freespace "mbr"
+        disk_freespace "gpt"
         disk_minimal ${VERSION} "x86_64"
         disk_minimal ${VERSION} "i686"
         disk_desktop ${VERSION} "x86_64"
         disk_desktop ${VERSION} "i686"
         disk_ks
         disk_updates_img
-        disk_shrink "ext4"
-        disk_shrink "ntfs"
+        disk_shrink "ext4" "mbr"
+        disk_shrink "ntfs" "mbr"
+        disk_shrink "ext4" "gpt"
+        disk_shrink "ntfs" "gpt"
     else
+        # default type of partition table is mbr
+        PART_TABLE_TYPE="mbr"
+        if [[ "$#" -gt 1 ]]; then
+            case $2 in
+                mbr)
+                    ;;
+                gpt)
+                    PART_TABLE_TYPE="gpt"
+                    ;;
+                *)
+                    echo "partition table type should be gpt or mbr (default)"
+                    exit 1
+                    ;;
+            esac
+        fi
         case $1 in
             full)
-                disk_full
+                disk_full ${PART_TABLE_TYPE}
                 ;;
             freespace)
-                disk_freespace
+                disk_freespace ${PART_TABLE_TYPE}
                 ;;
             minimal_64bit)
                 disk_minimal ${VERSION} "x86_64"
@@ -179,10 +201,10 @@ if [[ "$1" != "" ]]; then
                 disk_updates_img
                 ;;
             shrink_ext4)
-                disk_shrink "ext4"
+                disk_shrink "ext4" ${PART_TABLE_TYPE}
                 ;;
             shrink_ntfs)
-                disk_shrink "ntfs"
+                disk_shrink "ntfs" ${PART_TABLE_TYPE}
                 ;;
             *)
                 echo "name not in [full|freespace|minimal_64bit|minimal_32bit|desktop_64bit|desktop_32bit|ks|updates|shrink_ext4|shrink_ntfs]"
@@ -191,6 +213,6 @@ if [[ "$1" != "" ]]; then
         esac
     fi
 else
-    echo "USAGE: $0 VERSION [full|freespace|minimal_64bit|minimal_32bit|desktop_64bit|desktop_32bit|ks|updates|shrink_ext4|shrink_ntfs]"
+    echo "USAGE: $0 VERSION [full|freespace|minimal_64bit|minimal_32bit|desktop_64bit|desktop_32bit|ks|updates|shrink_ext4|shrink_ntfs] [mbr|gpt]"
     exit 1
 fi
