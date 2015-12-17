@@ -1,0 +1,132 @@
+{
+    "guestfs" : [
+        {
+            "name" : "full",
+            "size" : "10G",
+            "labels" : ["mbr", "gpt"],
+            "parts" : [
+                {
+                    "filesystem" : "ext4",
+                    "type" : "p",
+                    "start" : "4096",
+                    "end" : "10485760"
+                },
+                {
+                    "filesystem" : "ext4",
+                    "type" : "p",
+                    "start" : "10485761",
+                    "end" : "-4097"
+                }
+            ],
+            "writes" : [
+                {
+                    "part" : "1",
+                    "path" : "/testfile",
+                    "content" : "Hello, world!"
+                },
+                {
+                    "part" : "2",
+                    "path" : "/testfile",
+                    "content" : "Oh, hi Mark"
+                }
+            ]
+        },
+        {
+            "name" : "freespace",
+            "size" : "10G",
+            "labels" : ["mbr", "gpt"],
+            "parts" : [
+                {
+                    "filesystem" : "ext4",
+                    "type" : "p",
+                    "start" : "4096",
+                    "end" : "2097152"
+                }
+            ],
+            "writes" : [
+                {
+                    "part" : "1",
+                    "path" : "/testfile",
+                    "content" : "Hello, world!"
+                }
+            ]
+        },
+        {
+            "name" : "ks",
+            "size" : "100M",
+            "parts" : [
+                {
+                    "filesystem" : "ext4",
+                    "type" : "p",
+                    "start" : "4096",
+                    "end" : "-1"
+                }
+            ],
+            "uploads" : [
+                {
+                    "part" : "1",
+                    "target" : "/root-user-crypted-net.ks",
+                    "source" : "https://jskladan.fedorapeople.org/kickstarts/root-user-crypted-net.ks"
+                }
+            ]
+        },
+        {
+            "name" : "updates_img",
+            "size" : "100M",
+            "parts" : [
+                {
+                    "filesystem" : "ext4",
+                    "label" : "UPDATES_IMG",
+                    "type" : "p",
+                    "start" : "4096",
+                    "end" : "-1"
+                }
+            ],
+            "uploads" : [
+                {
+                    "part" : "1",
+                    "target" : "/updates.img",
+                    "source" : "https://fedorapeople.org/groups/qa/updates/updates-unipony.img"
+                }
+            ]
+        },
+        {
+            "name" : "shrink",
+            "size" : "10G",
+            "labels" : ["mbr", "gpt"],
+            "filesystems" : ["ext4", "ntfs"],
+            "parts" : [
+                {
+                    "type" : "p",
+                    "start" : "4096",
+                    "end" : "-4097"
+                }
+            ],
+            "writes" : [
+                {
+                    "part" : "1",
+                    "path" : "/testfile",
+                    "content" : "Hello, world!"
+                }
+            ]
+        }
+    ],
+    "virtbuilder" : [
+        {
+            "name" : "minimal",
+            "releases" : {
+                "-1" : ["x86_64"],
+                "-2" : ["x86_64"]
+            }
+        },
+        {
+            "name" : "desktop",
+            "releases" : {
+                "-1" : ["x86_64", "i686"],
+                "-2" : ["x86_64", "i686"]
+            },
+            "size" : "20G"
+        }
+    ],
+    "renames" : []
+}
