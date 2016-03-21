@@ -147,7 +147,8 @@ class GuestfsImage(object):
             for upload in self.uploads:
                 # download the file to a temp file - borrowed from
                 # fedora_openqa_schedule (which stole it from SO)
-                with tempfile.NamedTemporaryFile(prefix="createhdds") as dltmpfile:
+                (_, tmpfname) = tempfile.mkstemp(prefix="createhdds")
+                with open(tmpfname, 'wb') as tmpfh:
                     resp = urlopen(upload['source'])
                     while True:
                         # This is the number of bytes to read between buffer
@@ -155,12 +156,13 @@ class GuestfsImage(object):
                         buff = resp.read(8192)
                         if not buff:
                             break
-                        dltmpfile.write(buff)
-                    # as with write, the dict must specify a target
-                    # partition and location ('target')
-                    partn = gfs.list_partitions()[int(upload['part'])-1]
-                    gfs.mount(partn, "/")
-                    gfs.upload(dltmpfile.name, upload['target'])
+                        tmpfh.write(buff)
+                # as with write, the dict must specify a target
+                # partition and location ('target')
+                partn = gfs.list_partitions()[int(upload['part'])-1]
+                gfs.mount(partn, "/")
+                gfs.upload(tmpfname, upload['target'])
+                os.remove(tmpfname)
             # we're all done! rename to the correct name
             os.rename(tmpfile, self.filename)
         except:
@@ -170,7 +172,8 @@ class GuestfsImage(object):
             raise
         finally:
             # whether things go right or wrong, we want to close the
-            # gfs instance
+            # gfs instance, and rwmj recommends 'shutdown()' too
+            gfs.shutdown()
             gfs.close()
 
 
