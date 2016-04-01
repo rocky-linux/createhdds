@@ -73,6 +73,7 @@
         {
             "name" : "updates_img",
             "size" : "100M",
+            "imgver" : "2",
             "parts" : [
                 {
                     "filesystem" : "ext4",
@@ -86,7 +87,7 @@
                 {
                     "part" : "1",
                     "target" : "/updates.img",
-                    "source" : "https://fedorapeople.org/groups/qa/updates/updates-unipony.img"
+                    "source" : "https://fedorapeople.org/groups/qa/updates/updates-openqa.img"
                 }
             ]
         },
