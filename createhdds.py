@@ -140,6 +140,8 @@ class GuestfsImage(object):
                 # do the write: the dict must specify the target path
                 # and the string to be written ('content')
                 gfs.write(write['path'], write['content'])
+                gfs.sync()
+                gfs.umount_opts("/")
             # do file 'uploads'. in guestfs-speak that means transfer
             # a file from the host to the image, we use it to mean
             # download a file from an http server and transfer that
@@ -163,6 +165,8 @@ class GuestfsImage(object):
                 gfs.mount(partn, "/")
                 gfs.upload(tmpfname, upload['target'])
                 os.remove(tmpfname)
+                gfs.sync()
+                gfs.umount_opts("/")
             # we're all done! rename to the correct name
             os.rename(tmpfile, self.filename)
         except:

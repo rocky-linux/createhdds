@@ -54,6 +54,7 @@
         {
             "name" : "ks",
             "size" : "100M",
+            "imgver" : "2",
             "parts" : [
                 {
                     "filesystem" : "ext4",
@@ -67,6 +68,16 @@
                     "part" : "1",
                     "target" : "/root-user-crypted-net.ks",
                     "source" : "https://jskladan.fedorapeople.org/kickstarts/root-user-crypted-net.ks"
+                },
+                {
+                    "part" : "1",
+                    "target" : "/freeipa.ks",
+                    "source" : "https://www.happyassassin.net/ks/oqipas.ks"
+                },
+                {
+                    "part" : "1",
+                    "target" : "/freeipaclient.ks",
+                    "source" : "https://www.happyassassin.net/ks/oqipac.ks"
                 }
             ]
         },
