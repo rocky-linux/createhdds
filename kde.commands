@@ -3,5 +3,5 @@ update
 selinux-relabel
 install @kde-desktop-environment
 link /usr/lib/systemd/system/graphical.target:/etc/systemd/system/default.target
-firstboot-command useradd -m -p '' ejohn
-firstboot-command echo 'ejohn:weakpassword' | chpasswd
+firstboot-command useradd -m -p '' test
+firstboot-command echo 'test:weakpassword' | chpasswd
