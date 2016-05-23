@@ -206,34 +206,68 @@ class VirtBuilderImage(object):
         self.arch = arch
         self.maxage = maxage
 
-    def create(self):
+    def create(self, retries=3):
         """Create the image."""
-        # Basic creation command with standard params
-        args = ["virt-builder", "fedora-{0}".format(str(self.release)), "-o", self.filename,
-                "--arch", self.arch]
-        if self.size:
-            args.extend(["--size", "{0}b".format(str(int(self.size)))])
-        # We use guestfs's ability to read customization commands from
-        # a file. The convention is to have a file 'name.commands' in
-        # SCRIPTDIR; if this file exists, we pass it to virt-builder.
-        if os.path.isfile("{0}/{1}.commands".format(SCRIPTDIR, self.name)):
-            args.extend(["--commands-from-file", "{0}/{1}.commands".format(SCRIPTDIR, self.name)])
-        ret = subprocess.call(args)
-        if ret > 0:
-            sys.exit("virt-builder command {0} failed!".format(' '.join(args)))
-        # We have to boot the disk to make SELinux relabelling happen;
-        # virt-builder can't do it unless the policy version on the host
-        # is the same as the guest(?) There are lots of bad ways to do
-        # this, expect is the one we're using.
-        child = pexpect.spawnu("qemu-kvm -m 2G -nographic {0}".format(self.filename), timeout=None)
-        child.expect(u"localhost login:")
-        child.sendline(u"root")
-        child.expect(u"Password:")
-        child.sendline(u"weakpassword")
-        child.expect(u"~]#")
-        child.sendline(u"poweroff")
-        child.expect(u"reboot: Power down")
-        child.close()
+        tmpfile = "{0}.tmp".format(self.filename)
+        try:
+            # Basic creation command with standard params
+            args = ["virt-builder", "fedora-{0}".format(str(self.release)), "-o", tmpfile,
+                    "--arch", self.arch]
+            if self.size:
+                args.extend(["--size", "{0}b".format(str(int(self.size)))])
+            # We use guestfs's ability to read customization commands from
+            # a file. The convention is to have a file 'name.commands' in
+            # SCRIPTDIR; if this file exists, we pass it to virt-builder.
+            if os.path.isfile("{0}/{1}.commands".format(SCRIPTDIR, self.name)):
+                args.extend(["--commands-from-file", "{0}/{1}.commands".format(SCRIPTDIR, self.name)])
+            # run the command, timing out after 1 hour; sometimes creation
+            # seems to just get mysteriously stuck, we need to bail and
+            # retry in this case
+            try:
+                ret = subprocess.call(args, timeout=3600)
+            except subprocess.TimeoutExpired:
+                logger.warning("Image creation timed out!")
+                if os.path.isfile(tmpfile):
+                    os.remove(tmpfile)
+                if retries:
+                    logger.info("Retrying: %s retries remain after this", str(retries))
+                    return self.create(retries=retries-1)
+                else:
+                    sys.exit("Image creation timed out too many times!")
+            if ret > 0:
+                # wipe the temp file
+                if os.path.isfile(tmpfile):
+                    os.remove(tmpfile)
+                sys.exit("virt-builder command {0} failed!".format(' '.join(args)))
+            # We have to boot the disk to make SELinux relabelling happen;
+            # virt-builder can't do it unless the policy version on the host
+            # is the same as the guest(?) There are lots of bad ways to do
+            # this, expect is the one we're using. This can also get stuck
+            # apparently, so let's set a 300 sec timeout for each expect
+            # and bail if it's hit.
+            try:
+                logger.info("Booting image to trigger SELinux relabel...")
+                child = pexpect.spawnu("qemu-kvm -m 2G -nographic {0}".format(tmpfile), timeout=300)
+                child.expect(u"localhost login:")
+                child.sendline(u"root")
+                child.expect(u"Password:")
+                child.sendline(u"weakpassword")
+                child.expect(u"~]#")
+                child.sendline(u"poweroff")
+                child.expect(u"reboot: Power down")
+                child.close()
+            except pexpect.TIMEOUT:
+                if os.path.isfile(tmpfile):
+                    os.remove(tmpfile)
+                sys.exit("Timed out booting image!")
+            # we're all done! rename to the correct name
+            os.rename(tmpfile, self.filename)
+        except:
+            # if anything went wrong, we want to wipe the temp file
+            # then raise
+            if os.path.isfile(tmpfile):
+                os.remove(tmpfile)
+            raise
 
     @property
     def outdated(self):
@@ -653,7 +687,7 @@ def main():
         args.func(args, hdds)
     except KeyboardInterrupt:
         sys.stderr.write("Interrupted, exiting...\n")
-        # there may be a guestfs temp image file lying around...
+        # there may be temp image files lying around...
         tmps = [fl for fl in os.listdir('.') if fl.startswith('disk') and fl.endswith('.tmp')]
         for tmp in tmps:
             os.remove(tmp)
