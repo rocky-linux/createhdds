@@ -247,7 +247,7 @@ class VirtBuilderImage(object):
             # and bail if it's hit.
             try:
                 logger.info("Booting image to trigger SELinux relabel...")
-                child = pexpect.spawnu("qemu-kvm -m 2G -nographic {0}".format(tmpfile), timeout=300)
+                child = pexpect.spawnu("qemu-kvm -m 2G -nographic {0}".format(tmpfile), timeout=600)
                 child.expect(u"localhost login:")
                 child.sendline(u"root")
                 child.expect(u"Password:")
