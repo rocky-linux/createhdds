@@ -156,6 +156,12 @@
             },
             "size" : "20G",
             "imgver": "2"
+        },
+        {
+            "name" : "support",
+            "releases" : {
+                "-1" : ["x86_64"]
+            }
         }
     ],
     "renames" : []
