@@ -159,6 +159,7 @@
         },
         {
             "name" : "support",
+            "imgver" : "2",
             "releases" : {
                 "-1" : ["x86_64"]
             }
