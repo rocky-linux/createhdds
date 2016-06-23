@@ -2,6 +2,10 @@ root-password password:weakpassword
 update
 selinux-relabel
 install @workstation-product-environment
-link /usr/lib/systemd/system/graphical.target:/etc/systemd/system/default.target
 firstboot-command useradd -m -p '' test
 firstboot-command echo 'test:weakpassword' | chpasswd
+# we do this on firstboot (i.e. when createhdds boots to do the selinux
+# relabel) so the selinux label on the symlink is correct; see RHBZ #1349586
+firstboot-command systemctl set-default graphical.target
+# workaround RHBZ #1349664
+firstboot-command systemctl enable gdm.service
