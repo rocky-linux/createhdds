@@ -1,4 +1,0 @@
-root-password password:weakpassword
-update
-selinux-relabel
-install scsi-target-utils,nfs-utils,dnsmasq

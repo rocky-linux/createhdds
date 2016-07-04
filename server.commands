@@ -1,6 +1,0 @@
-root-password password:weakpassword
-update
-selinux-relabel
-install @server-product-environment
-firstboot-command useradd -m -p '' test
-firstboot-command echo 'test:weakpassword' | chpasswd

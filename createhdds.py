@@ -23,23 +23,20 @@ import argparse
 import logging
 import json
 import os
-try:
-    import subprocess32 as subprocess
-except ImportError:
-    import subprocess
+import subprocess
 import sys
-import time
 import tempfile
+import time
 
 import fedfind.helpers
 import guestfs
-import pexpect
+import libvirt
 
 from six.moves.urllib.request import urlopen
 
 # this is a bit icky, but it means you can run the script from
-# anywhere - we use this to locate hdds.json and the virtbuilder
-# image command files, so they must always be in the same place
+# anywhere - we use this to locate hdds.json and the virtinstall
+# image kickstarts, so they must always be in the same place
 # as the script itself. images are checked/created in the working
 # directory.
 SCRIPTDIR = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -181,49 +178,85 @@ class GuestfsImage(object):
             gfs.close()
 
 
-class VirtBuilderImage(object):
-    """Class representing an image created by virt-builder. 'release'
-    is the release the image will be built for. 'arch' is the arch.
-    'size' is the desired image size, valid formats are a digit string
-    (size in bytes, digit string plus 'M', 'MB' or 'MiB' (size in
-    power of two megabytes), or digit string plus 'G', 'GB' or 'GiB'
-    (size in power of two gigabytes). 0 (or any false-y value) means
-    the image will be the size of the upstream base image. 'imgver' is
+class VirtInstallImage(object):
+    """Class representing an image created by virt-install. 'release'
+    is the release the image will be built for. 'variant' is the
+    variant whose install tree should be used. 'arch' is the arch.
+    'size' is the desired image size, in gigabytes. 'imgver' is
     the image 'version' - in practice it's simply a string that gets
     included in the image file name if specified. 'maxage' is the
     maximum age of the image file (in days) - if the image is older
     than this, 'check' will report it as 'outdated' and 'all' will
     rebuild it.
     """
-    def __init__(self, name, release, arch, size=0, imgver='', maxage=14):
+    def __init__(self, name, release, arch, size, variant=None, imgver='', maxage=14):
         self.name = name
-        self.size = handle_size(size)
+        self.size = size
         self.filename = "disk_f{0}_{1}".format(str(release), name)
         if imgver:
             self.filename = "{0}_{1}".format(self.filename, imgver)
         self.filename = "{0}_{1}.img".format(self.filename, arch)
         self.release = release
+        self.variant = variant
         self.arch = arch
         self.maxage = maxage
+        if variant:
+            self.variant = variant
+        else:
+            if release < 24:
+                self.variant = "Server"
+            else:
+                self.variant = "Everything"
 
     def create(self, retries=3):
         """Create the image."""
+        # figure out the best os-variant. this is harder than it ought
+        # to be thanks to RHBZ #1351718...
+        found = False
+        rel = self.release + 1
+        shortid = ""
+        while not found:
+            rel -= 1
+            shortid = "fedora{0}".format(str(rel))
+            args = ["osinfo-query", "os", "short-id={0}".format(shortid)]
+            process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            out = process.communicate()[0].decode()
+            if shortid in out:
+                found = True
+
+        # destroy and delete the domain we use for all virt-installs
+        conn = libvirt.open()
+        try:
+            dom = conn.lookupByName('createhdds')
+            try:
+                dom.destroy()
+            except libvirt.libvirtError:
+                # domain may not be running, so this is fine
+                pass
+            dom.undefine()
+        except libvirt.libvirtError:
+            # domain may not exist, so this is fine
+            pass
+        conn.close()
+
         tmpfile = "{0}.tmp".format(self.filename)
         try:
-            # Basic creation command with standard params
-            args = ["virt-builder", "fedora-{0}".format(str(self.release)), "-o", tmpfile,
-                    "--arch", self.arch]
-            if self.size:
-                args.extend(["--size", "{0}b".format(str(int(self.size)))])
-            # We use guestfs's ability to read customization commands from
-            # a file. The convention is to have a file 'name.commands' in
-            # SCRIPTDIR; if this file exists, we pass it to virt-builder.
-            if os.path.isfile("{0}/{1}.commands".format(SCRIPTDIR, self.name)):
-                args.extend(["--commands-from-file", "{0}/{1}.commands".format(SCRIPTDIR, self.name)])
+            loctmp = "https://download.fedoraproject.org/pub/fedora/linux/releases/{0}/{1}/{2}/os"
+            arch = self.arch
+            if arch == 'i686':
+                arch = 'i386'
+            args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
+                    "--os-variant", shortid, "-x",
+                    "inst.ks=file:/{0}.ks".format(self.name), "--initrd-inject",
+                    "{0}/{1}.ks".format(SCRIPTDIR, self.name), "--location",
+                    loctmp.format(str(self.release), self.variant, arch), "--graphics", "vnc",
+                    "--name", "createhdds", "--memory", "2048", "--noreboot", "--noautoconsole",
+                    "--wait", "-1"]
             # run the command, timing out after 1 hour; sometimes creation
             # seems to just get mysteriously stuck, we need to bail and
             # retry in this case
             try:
+                logger.info("Install running, connect via VNC to monitor")
                 ret = subprocess.call(args, timeout=3600)
             except subprocess.TimeoutExpired:
                 logger.warning("Image creation timed out!")
@@ -238,33 +271,27 @@ class VirtBuilderImage(object):
                 # wipe the temp file
                 if os.path.isfile(tmpfile):
                     os.remove(tmpfile)
-                sys.exit("virt-builder command {0} failed!".format(' '.join(args)))
-            # We have to boot the disk to make SELinux relabelling happen;
-            # virt-builder can't do it unless the policy version on the host
-            # is the same as the guest(?) There are lots of bad ways to do
-            # this, expect is the one we're using. This can also get stuck
-            # apparently, so let's set a 300 sec timeout for each expect
-            # and bail if it's hit.
-            try:
-                logger.info("Booting image to trigger SELinux relabel...")
-                child = pexpect.spawnu("qemu-kvm -m 2G -nographic {0}".format(tmpfile), timeout=600)
-                child.expect(u"localhost login:")
-                child.sendline(u"root")
-                child.expect(u"Password:")
-                child.sendline(u"weakpassword")
-                child.expect(u"~]#")
-                child.sendline(u"poweroff")
-                child.expect(u"reboot: Power down")
-                child.close()
-            except pexpect.TIMEOUT:
+                sys.exit("virt-install command {0} failed!".format(' '.join(args)))
+            # at this point the domain should be shut off; if it's
+            # anything else, something went wrong: clean up and exit
+            conn = libvirt.open()
+            dom = conn.lookupByName('createhdds')
+            if dom.state()[0] != libvirt.VIR_DOMAIN_SHUTOFF:
+                conn.close()
                 if os.path.isfile(tmpfile):
                     os.remove(tmpfile)
-                sys.exit("Timed out booting image!")
-            # we're all done! rename to the correct name
+                sys.exit("libvirt domain ('createhdds') is not shutdown! "
+                         "this is an unexpected condition, aborting.")
+            # we're all done! rename to the correct name and clean up
+            # the domain
             os.rename(tmpfile, self.filename)
+            os.chmod(self.filename, 0o644)
+            dom.undefine()
+            conn.close()
         except:
             # if anything went wrong, we want to wipe the temp file
-            # then raise
+            # then raise. we leave the domain intact in case we want
+            # to debug it
             if os.path.isfile(tmpfile):
                 os.remove(tmpfile)
             raise
@@ -335,9 +362,9 @@ def get_guestfs_images(imggrp, labels=None, filesystems=None):
             imgs.append(img)
     return imgs
 
-def get_virtbuilder_images(imggrp, nextrel=None, releases=None):
+def get_virtinstall_images(imggrp, nextrel=None, releases=None):
     """Passed a single 'image group' dict (usually read out of hdds.
-    json), returns a list of VirtBuilderImage instances. 'nextrel'
+    json), returns a list of VirtInstallImage instances. 'nextrel'
     indicates the 'next' release of Fedora: sometimes we determine the
     release to build image(s) for in relation to this, so we need to
     know it. If it's not specified, we ask fedfind to figure it out
@@ -360,6 +387,8 @@ def get_virtbuilder_images(imggrp, nextrel=None, releases=None):
     name = imggrp['name']
     # this is the second place we set a default for maxage - bit ugly
     maxage = int(imggrp.get('maxage', 14))
+    # ditto variant
+    variant = imggrp.get('variant')
     if not releases:
         releases = imggrp['releases']
     size = imggrp.get('size', 0)
@@ -373,7 +402,8 @@ def get_virtbuilder_images(imggrp, nextrel=None, releases=None):
             relnum = int(nextrel) + int(relnum)
         for arch in arches:
             imgs.append(
-                VirtBuilderImage(name, relnum, arch, size=size, imgver=imgver, maxage=maxage))
+                VirtInstallImage(name, relnum, arch, variant=variant, size=size, imgver=imgver,
+                                 maxage=maxage))
     return imgs
 
 def get_all_images(hdds, nextrel=None):
@@ -390,8 +420,8 @@ def get_all_images(hdds, nextrel=None):
     for imggrp in hdds['guestfs']:
         imgs.extend(get_guestfs_images(imggrp))
 
-    for imggrp in hdds['virtbuilder']:
-        imgs.extend(get_virtbuilder_images(imggrp, nextrel=nextrel))
+    for imggrp in hdds['virtinstall']:
+        imgs.extend(get_virtinstall_images(imggrp, nextrel=nextrel))
     return imgs
 
 def do_renames(hdds):
@@ -557,9 +587,9 @@ def cli_image(args, *_):
             filesystems = [args.filesystem]
         imgs = get_guestfs_images(imggrp, labels=labels, filesystems=filesystems)
 
-    elif imgtype == 'virtbuilder':
+    elif imgtype == 'virtinstall':
         # If the user passed args.release, we construct a releases
-        # dict to pass to get_virtbuilder_images to override the dict
+        # dict to pass to get_virtinstall_images to override the dict
         # from imggrp. If they passed args.arch, we use that arch,
         # otherwise we default to x86_64. If args.release isn't set,
         # we just pass None as release, and the releases dict from
@@ -573,7 +603,7 @@ def cli_image(args, *_):
             else:
                 arches = ['x86_64']
             releases = {args.release: arches}
-        imgs = get_virtbuilder_images(imggrp, releases=releases)
+        imgs = get_virtinstall_images(imggrp, releases=releases)
 
     for (num, img) in enumerate(imgs, 1):
         logger.info("Creating image %s...[%s/%s]", img.filename, str(num), str(len(imgs)))
@@ -649,11 +679,11 @@ def parse_args(hdds):
         # hdds into args for cli_image() to use.
         imgparser.set_defaults(imggrp=('guestfs', imggrp))
 
-    # For libvirt images, we provide args to override the release/arch
-    # combination; using args.release will always result in just a
+    # For virtinstall images, we provide args to override the release/
+    # arch combination; using args.release will always result in just a
     # single image being built, for x86_64 unless args.arch is set to
     # i686.
-    for imggrp in hdds['virtbuilder']:
+    for imggrp in hdds['virtinstall']:
         imgparser = subparsers.add_parser(
             imggrp['name'], description="Create {0} image(s)".format(imggrp['name']))
         imgparser.add_argument(
@@ -670,7 +700,7 @@ def parse_args(hdds):
         imgparser.set_defaults(func=cli_image)
         # Here we're stuffing the type of the image and the dict from
         # hdds into args for cli_image() to use.
-        imgparser.set_defaults(imggrp=('virtbuilder', imggrp))
+        imgparser.set_defaults(imggrp=('virtinstall', imggrp))
     return parser.parse_args()
 
 def main():
