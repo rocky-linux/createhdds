@@ -144,6 +144,15 @@
             "variant": "Workstation"
         },
         {
+            "name" : "desktopencrypt",
+            "releases" : {
+                "-1" : ["x86_64"],
+                "-2" : ["x86_64"]
+            },
+            "size" : "20",
+            "variant": "Workstation"
+        },
+        {
             "name" : "server",
             "releases" : {
                 "-1" : ["x86_64"],
