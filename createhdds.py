@@ -144,24 +144,11 @@ class GuestfsImage(object):
             # download a file from an http server and transfer that
             # to the image
             for upload in self.uploads:
-                # download the file to a temp file - borrowed from
-                # fedora_openqa_schedule (which stole it from SO)
-                (_, tmpfname) = tempfile.mkstemp(prefix="createhdds")
-                with open(tmpfname, 'wb') as tmpfh:
-                    resp = urlopen(upload['source'])
-                    while True:
-                        # This is the number of bytes to read between buffer
-                        # flushes. Value taken from the SO example.
-                        buff = resp.read(8192)
-                        if not buff:
-                            break
-                        tmpfh.write(buff)
                 # as with write, the dict must specify a target
                 # partition and location ('target')
                 partn = gfs.list_partitions()[int(upload['part'])-1]
                 gfs.mount(partn, "/")
-                gfs.upload(tmpfname, upload['target'])
-                os.remove(tmpfname)
+                gfs.upload('/'.join((SCRIPTDIR, 'uploads', upload['source'])), upload['target'])
                 gfs.sync()
                 gfs.umount_opts("/")
             # we're all done! rename to the correct name

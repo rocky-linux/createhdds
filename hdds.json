@@ -54,7 +54,7 @@
         {
             "name" : "ks",
             "size" : "100M",
-            "imgver" : "2",
+            "imgver" : "3",
             "parts" : [
                 {
                     "filesystem" : "ext4",
@@ -67,17 +67,17 @@
                 {
                     "part" : "1",
                     "target" : "/root-user-crypted-net.ks",
-                    "source" : "https://jskladan.fedorapeople.org/kickstarts/root-user-crypted-net.ks"
+                    "source" : "root-user-crypted-net.ks"
                 },
                 {
                     "part" : "1",
                     "target" : "/freeipa.ks",
-                    "source" : "https://www.happyassassin.net/ks/oqipas.ks"
+                    "source" : "freeipa.ks"
                 },
                 {
                     "part" : "1",
                     "target" : "/freeipaclient.ks",
-                    "source" : "https://www.happyassassin.net/ks/oqipac.ks"
+                    "source" : "freeipaclient.ks"
                 }
             ]
         },
@@ -98,7 +98,7 @@
                 {
                     "part" : "1",
                     "target" : "/updates.img",
-                    "source" : "https://fedorapeople.org/groups/qa/updates/updates-openqa.img"
+                    "source" : "updates.img"
                 }
             ]
         },
