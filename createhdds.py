@@ -524,8 +524,8 @@ def cli_check(args, hdds):
     """Function for the CLI 'check' subcommand. Basically just calls
     check() and prints the results. Does renames before checking if
     args.rename was set, and wipes 'unknown' images after checking if
-    args.clean was set. Exits with status 1 if any missing and/or
-    outdated files are found (handy for scripting/automation).
+    args.clean was set. Exits with status 2 if any images are missing,
+    1 if all images are present but one or more is outdated.
     """
     if args.rename:
         do_renames(hdds)
@@ -540,8 +540,10 @@ def cli_check(args, hdds):
         if args.clean:
             clean(unknown)
 
-    if missing or outdated:
-        sys.exit("Missing and/or outdated images found!")
+    if missing:
+        sys.exit(2)
+    elif outdated:
+        sys.exit(1)
     else:
         sys.exit()
 
