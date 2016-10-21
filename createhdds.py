@@ -239,6 +239,10 @@ class VirtInstallImage(object):
                     loctmp.format(str(self.release), self.variant, arch), "--graphics", "vnc",
                     "--name", "createhdds", "--memory", "2048", "--noreboot", "--noautoconsole",
                     "--wait", "-1"]
+            # this is a hacky workaround for a weird bug on Fedora's prod
+            # openQA server:
+            # https://bugzilla.redhat.com/show_bug.cgi?id=1387798
+            args.extend(("--network", "user"))
             # run the command, timing out after 1 hour; sometimes creation
             # seems to just get mysteriously stuck, we need to bail and
             # retry in this case
