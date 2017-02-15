@@ -99,8 +99,11 @@ class GuestfsImage(object):
                 self.filename = "{0}_{1}".format(self.filename, item)
         self.filename = "{0}.img".format(self.filename)
 
-    def create(self):
-        """Create the image."""
+    def create(self, _):
+        """Create the image. The unused arg is the 'textinst' arg that
+        only VirtInstallImages care about (but which has to be passed
+        here too).
+        """
         gfs = guestfs.GuestFS(python_return_dict=True)
         try:
             # Create the disk image with a temporary name
@@ -190,26 +193,24 @@ class VirtInstallImage(object):
         if variant:
             self.variant = variant
         else:
-            if release < 24:
+            if str(release).isdigit() and int(release) < 24:
                 self.variant = "Server"
             else:
                 self.variant = "Everything"
 
-    def create(self, retries=3):
+    def create(self, textinst, retries=3):
         """Create the image."""
-        # figure out the best os-variant. this is harder than it ought
-        # to be thanks to RHBZ #1351718...
-        found = False
-        rel = self.release + 1
-        shortid = ""
-        while not found:
-            rel -= 1
-            shortid = "fedora{0}".format(str(rel))
-            args = ["osinfo-query", "os", "short-id={0}".format(shortid)]
-            process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-            out = process.communicate()[0].decode()
-            if shortid in out:
-                found = True
+        # figure out the best os-variant. NOTE: libosinfo >= 0.3.1
+        # properly returns 1 on failure, but using workaround for old
+        # bug where it didn't in case EPEL doesn't have 0.3.1
+        shortid = "fedora{0}".format(self.release)
+        args = ["osinfo-query", "os", "short-id={0}".format(shortid)]
+        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        out = process.communicate()[0].decode()
+        if shortid not in out:
+            # this will just use the most recent fedora release number
+            # virt-install / osinfo knows
+            shortid = 'fedora-unknown'
 
         # destroy and delete the domain we use for all virt-installs
         conn = libvirt.open()
@@ -228,7 +229,18 @@ class VirtInstallImage(object):
 
         tmpfile = "{0}.tmp".format(self.filename)
         try:
-            loctmp = "https://download.fedoraproject.org/pub/fedora/linux/releases/{0}/{1}/{2}/os"
+            # this is almost complex enough to need fedfind but not
+            # quite, I think. also fedfind can't find the 'transient'
+            # rawhide and branched locations at present
+            if self.release == 'rawhide':
+                loctmp = "https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/{1}/{2}/os"
+            elif int(self.release) > fedfind.helpers.get_current_release(branched=False):
+                # branched
+                loctmp = "https://dl.fedoraproject.org/pub/fedora/linux/development/"
+                loctmp += self.release[1:]
+                loctmp += "/{1}/{2}/os"
+            else:
+                loctmp = "https://download.fedoraproject.org/pub/fedora/linux/releases/{0}/{1}/{2}/os"
             arch = self.arch
             if arch == 'i686':
                 arch = 'i386'
@@ -236,9 +248,12 @@ class VirtInstallImage(object):
                     "--os-variant", shortid, "-x",
                     "inst.ks=file:/{0}.ks".format(self.name), "--initrd-inject",
                     "{0}/{1}.ks".format(SCRIPTDIR, self.name), "--location",
-                    loctmp.format(str(self.release), self.variant, arch), "--graphics", "vnc",
-                    "--name", "createhdds", "--memory", "2048", "--noreboot", "--noautoconsole",
-                    "--wait", "-1"]
+                    loctmp.format(str(self.release), self.variant, arch), "--name", "createhdds",
+                    "--memory", "2048", "--noreboot", "--wait", "-1"]
+            if textinst:
+                args.extend(("--graphics", "none", "--extra-args", "console=ttyS0"))
+            else:
+                args.extend(("--graphics", "vnc", "--noautoconsole"))
             # this is a hacky workaround for a weird bug on Fedora's prod
             # openQA server:
             # https://bugzilla.redhat.com/show_bug.cgi?id=1387798
@@ -247,7 +262,10 @@ class VirtInstallImage(object):
             # seems to just get mysteriously stuck, we need to bail and
             # retry in this case
             try:
-                logger.info("Install running, connect via VNC to monitor")
+                logger.info("Install starting...")
+                logger.debug("Command: %s", ' '.join(args))
+                if not textinst:
+                    logger.info("Connect via VNC to monitor")
                 ret = subprocess.call(args, timeout=3600)
             except subprocess.TimeoutExpired:
                 logger.warning("Image creation timed out!")
@@ -385,15 +403,24 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
     size = imggrp.get('size', 0)
     imgver = imggrp.get('imgver')
     # add an image for each release/arch combination
-    for (relnum, arches) in releases.items():
-        if int(relnum) < 0:
-            # negative relnum indicates 'relative to next release'
+    for (release, arches) in releases.items():
+        if release.lower() == 'branched':
+            # find Branched, if it exists
+            curr = fedfind.helpers.get_current_release(branched=False)
+            branch = fedfind.helpers.get_current_release(branched=True)
+            if branch > curr:
+                release = branch
+            else:
+                logger.info("Branched image requested, but Branched does not currently exist")
+                continue
+        elif release != 'rawhide' and int(release) < 0:
+            # negative release indicates 'relative to next release'
             if not nextrel:
                 nextrel = fedfind.helpers.get_current_release() + 1
-            relnum = int(nextrel) + int(relnum)
+            release = int(nextrel) + int(release)
         for arch in arches:
             imgs.append(
-                VirtInstallImage(name, relnum, arch, variant=variant, size=size, imgver=imgver,
+                VirtInstallImage(name, release, arch, variant=variant, size=size, imgver=imgver,
                                  maxage=maxage))
     return imgs
 
@@ -522,7 +549,7 @@ def cli_all(args, hdds):
     missing.extend(outdated)
     for (num, img) in enumerate(missing, 1):
         logger.info("Creating image %s...[%s/%s]", img.filename, str(num), str(len(missing)))
-        img.create()
+        img.create(args.textinst)
 
 def cli_check(args, hdds):
     """Function for the CLI 'check' subcommand. Basically just calls
@@ -600,7 +627,7 @@ def cli_image(args, *_):
 
     for (num, img) in enumerate(imgs, 1):
         logger.info("Creating image %s...[%s/%s]", img.filename, str(num), str(len(imgs)))
-        img.create()
+        img.create(args.textinst)
 
 def parse_args(hdds):
     """Parse arguments with argparse."""
@@ -610,6 +637,9 @@ def parse_args(hdds):
         '-l', '--loglevel', help="The level of log messages to show",
         choices=('debug', 'info', 'warning', 'error', 'critical'),
         default='info')
+    parser.add_argument(
+        '-t', '--textinst', help="For any virt-install images, run the install in text mode "
+        "and show details on stdout", action='store_true')
 
     # This is a workaround for a somewhat infamous argparse bug
     # in Python 3. See:
@@ -681,9 +711,9 @@ def parse_args(hdds):
             imggrp['name'], description="Create {0} image(s)".format(imggrp['name']))
         imgparser.add_argument(
             '-r', '--release', help="The release to build the image(s) for. If not "
-            "set or set to 0, createhdds will attempt to determine the current "
-            "release and build for appropriate releases relative to that",
-            type=int, default=0)
+            "set, createhdds will attempt to determine the current release and build "
+            "for appropriate releases relative to that",
+            default='')
         imgparser.add_argument(
             '-a', '--arch', help="The arch to build the image(s) for. If neither "
             "this nor --release is set, createhdds will decide the appropriate "
