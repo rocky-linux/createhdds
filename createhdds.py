@@ -31,6 +31,7 @@ import time
 import fedfind.helpers
 import guestfs
 import libvirt
+import platform
 
 from six.moves.urllib.request import urlopen
 
@@ -40,6 +41,7 @@ from six.moves.urllib.request import urlopen
 # as the script itself. images are checked/created in the working
 # directory.
 SCRIPTDIR = os.path.abspath(os.path.dirname(sys.argv[0]))
+CPUARCH = platform.processor()
 logger = logging.getLogger('createhdds')
 
 def handle_size(size):
@@ -230,20 +232,25 @@ class VirtInstallImage(object):
         tmpfile = "{0}.tmp".format(self.filename)
         arch = self.arch
         try:
+            # different url path between primary and secondary arch
+            arch = self.arch
+            if arch in ['ppc64','ppc64le']:
+                fedoradir = 'fedora-secondary'
+            else:
+                fedoradir = 'fedora/linux'
             # this is almost complex enough to need fedfind but not
             # quite, I think. also fedfind can't find the 'transient'
             # rawhide and branched locations at present
             if self.release == 'rawhide':
-                loctmp = "https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/{1}/{2}/os/"
+                loctmp = "https://dl.fedoraproject.org/pub/{0}/development/rawhide/{1}/{2}/os".format(fedoradir, self.variant, self.arch)
             elif int(self.release) > fedfind.helpers.get_current_release(branched=False):
                 # branched
-                loctmp = "https://dl.fedoraproject.org/pub/fedora/linux/development/{0}/{1}/{2}/os/"
+                loctmp = "https://dl.fedoraproject.org/pub/{3}/development/{0}/{1}/{2}/os/".format(self.release, self.variant, self.arch, fedoradir)
             else:
                 if arch == 'i686' and int(self.release) > 25:
                     # from F26 onwards, i686 is in fedora-secondary
-                    loctmp = "https://download.fedoraproject.org/pub/fedora-secondary/releases/{0}/{1}/{2}/os/"
-                else:
-                    loctmp = "https://download.fedoraproject.org/pub/fedora/linux/releases/{0}/{1}/{2}/os/"
+                    fedoradir = 'fedora-secondary'
+                loctmp = "https://download.fedoraproject.org/pub/{3}/releases/{0}/{1}/{2}/os/".format(self.release, self.variant, self.arch, fedoradir)
             if arch == 'i686':
                 arch = 'i386'
             xargs = "inst.ks=file:/{0}.ks".format(self.name)
@@ -397,6 +404,16 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
     -2 means 'two releases lower than the "next" release', and so on.
     The values are the arches to build for that release.
     """
+    powerpc_arches = ['ppc64', 'ppc64le']
+    intel_arches = ['i686', 'x86_64']
+    if CPUARCH in powerpc_arches:
+        supported_arches = powerpc_arches
+    elif CPUARCH in intel_arches:
+        supported_arches = intel_arches
+    else:
+        supported_arches = []
+        logger.info("Need to add a list of supported arches for %s CPU", CPUARCH)
+
     imgs = []
     # Set this here so if we need to calculate it, we only do it once
     if not nextrel:
@@ -436,6 +453,9 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
             # assume a single integer release number
             rels = [release]
         for arch in arches:
+            if arch not in supported_arches:
+                logger.debug("%s arch ignored on %s CPU machine", arch,  CPUARCH)
+                continue
             for rel in rels:
                 imgs.append(
                     VirtInstallImage(name, rel, arch, variant=variant, size=size, imgver=imgver,
