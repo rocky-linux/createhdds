@@ -273,7 +273,7 @@ class VirtInstallImage(object):
                     os.remove(tmpfile)
                 if retries:
                     logger.info("Retrying: %s retries remain after this", str(retries))
-                    return self.create(retries=retries-1)
+                    return self.create(textinst, retries=retries-1)
                 else:
                     sys.exit("Image creation timed out too many times!")
             if ret > 0:
