@@ -251,7 +251,7 @@ class VirtInstallImage(object):
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
                     "{0}/{1}.ks".format(SCRIPTDIR, self.name), "--location",
                     loctmp.format(str(self.release), self.variant, arch), "--name", "createhdds",
-                    "--memory", "2048", "--noreboot", "--wait", "-1"]
+                    "--memory", "4096", "--noreboot", "--wait", "-1"]
             if textinst:
                 args.extend(("--graphics", "none", "--extra-args", "console=ttyS0"))
             else:
