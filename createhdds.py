@@ -241,7 +241,7 @@ class VirtInstallImage(object):
             else:
                 if arch == 'i686' and int(self.release) > 25:
                     # from F26 onwards, i686 is in fedora-secondary
-                    loctmp = "https://download.fedoraproject.org/pub/fedora-secondary/linux/releases/{0}/{1}/{2}/os/"
+                    loctmp = "https://download.fedoraproject.org/pub/fedora-secondary/releases/{0}/{1}/{2}/os/"
                 else:
                     loctmp = "https://download.fedoraproject.org/pub/fedora/linux/releases/{0}/{1}/{2}/os/"
             if arch == 'i686':
