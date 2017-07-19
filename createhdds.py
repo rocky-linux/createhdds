@@ -228,20 +228,22 @@ class VirtInstallImage(object):
         conn.close()
 
         tmpfile = "{0}.tmp".format(self.filename)
+        arch = self.arch
         try:
             # this is almost complex enough to need fedfind but not
             # quite, I think. also fedfind can't find the 'transient'
             # rawhide and branched locations at present
             if self.release == 'rawhide':
-                loctmp = "https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/{1}/{2}/os"
+                loctmp = "https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/{1}/{2}/os/"
             elif int(self.release) > fedfind.helpers.get_current_release(branched=False):
                 # branched
-                loctmp = "https://dl.fedoraproject.org/pub/fedora/linux/development/"
-                loctmp += str(self.release)
-                loctmp += "/{1}/{2}/os"
+                loctmp = "https://dl.fedoraproject.org/pub/fedora/linux/development/{0}/{1}/{2}/os/"
             else:
-                loctmp = "https://download.fedoraproject.org/pub/fedora/linux/releases/{0}/{1}/{2}/os"
-            arch = self.arch
+                if arch == 'i686' and int(self.release) > 25:
+                    # from F26 onwards, i686 is in fedora-secondary
+                    loctmp = "https://download.fedoraproject.org/pub/fedora-secondary/linux/releases/{0}/{1}/{2}/os/"
+                else:
+                    loctmp = "https://download.fedoraproject.org/pub/fedora/linux/releases/{0}/{1}/{2}/os/"
             if arch == 'i686':
                 arch = 'i386'
             xargs = "inst.ks=file:/{0}.ks".format(self.name)
