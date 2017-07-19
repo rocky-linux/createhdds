@@ -245,9 +245,6 @@ class VirtInstallImage(object):
             if arch == 'i686':
                 arch = 'i386'
             xargs = "inst.ks=file:/{0}.ks".format(self.name)
-            if self.release == 26:
-                # workaround RHBZ #1439388: remove when fixed in F26
-                xargs += " inst.updates=https://www.happyassassin.net/updates/1439388.img"
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
                     "{0}/{1}.ks".format(SCRIPTDIR, self.name), "--location",
