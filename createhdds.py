@@ -247,11 +247,17 @@ class VirtInstallImage(object):
             if arch == 'i686':
                 arch = 'i386'
             xargs = "inst.ks=file:/{0}.ks".format(self.name)
+            variant = self.variant
+            # For F26, the installer images in the Workstation tree seem to be
+            # the OStree installer (they're much bigger than they should be),
+            # so use Everything instead of Workstation for F26
+            if int(self.release) == 26 and variant == "Workstation":
+                variant = "Everything"
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
                     "{0}/{1}.ks".format(SCRIPTDIR, self.name), "--location",
-                    loctmp.format(str(self.release), self.variant, arch), "--name", "createhdds",
-                    "--memory", "4096", "--noreboot", "--wait", "-1"]
+                    loctmp.format(str(self.release), variant, arch), "--name", "createhdds",
+                    "--memory", "2048", "--noreboot", "--wait", "-1"]
             if textinst:
                 args.extend(("--graphics", "none", "--extra-args", "console=ttyS0"))
             else:
