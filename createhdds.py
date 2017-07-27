@@ -417,19 +417,29 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
             curr = fedfind.helpers.get_current_release(branched=False)
             branch = fedfind.helpers.get_current_release(branched=True)
             if branch > curr:
-                release = branch
+                rels = [branch]
             else:
                 logger.info("Branched image requested, but Branched does not currently exist")
                 continue
+        elif release.lower() == 'stable':
+            # this means "all current stable releases"
+            rels = fedfind.helpers.get_current_stables()
+        elif release.lower() == 'current':
+            # this means "current stable release"
+            rels = [fedfind.helpers.get_current_release(branched=False)]
         elif release != 'rawhide' and int(release) < 0:
             # negative release indicates 'relative to next release'
             if not nextrel:
                 nextrel = fedfind.helpers.get_current_release() + 1
-            release = int(nextrel) + int(release)
+            rels = [int(nextrel) + int(release)]
+        else:
+            # assume a single integer release number
+            rels = [release]
         for arch in arches:
-            imgs.append(
-                VirtInstallImage(name, release, arch, variant=variant, size=size, imgver=imgver,
-                                 maxage=maxage))
+            for rel in rels:
+                imgs.append(
+                    VirtInstallImage(name, rel, arch, variant=variant, size=size, imgver=imgver,
+                                     maxage=maxage))
     return imgs
 
 def get_all_images(hdds, nextrel=None):
