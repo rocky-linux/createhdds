@@ -236,8 +236,10 @@ class VirtInstallImage(object):
             arch = self.arch
             if arch in ['ppc64','ppc64le']:
                 fedoradir = 'fedora-secondary'
+                memsize = '4096'
             else:
                 fedoradir = 'fedora/linux'
+                memsize = '2048'
             # this is almost complex enough to need fedfind but not
             # quite, I think. also fedfind can't find the 'transient'
             # rawhide and branched locations at present
@@ -264,7 +266,7 @@ class VirtInstallImage(object):
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
                     "{0}/{1}.ks".format(SCRIPTDIR, self.name), "--location",
                     loctmp.format(str(self.release), variant, arch), "--name", "createhdds",
-                    "--memory", "2048", "--noreboot", "--wait", "-1"]
+                    "--memory", memsize , "--noreboot", "--wait", "-1"]
             if textinst:
                 args.extend(("--graphics", "none", "--extra-args", "console=ttyS0"))
             else:
