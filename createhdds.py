@@ -56,6 +56,21 @@ def handle_size(size):
     else:
         return int(size)
 
+def supported_arches():
+    """Provides a list of the arches for which virt-install images can
+    be built on this host.
+    """
+    powerpc_arches = ['ppc64', 'ppc64le']
+    intel_arches = ['i686', 'x86_64']
+    if CPUARCH in powerpc_arches:
+        supported_arches = powerpc_arches
+    elif CPUARCH in intel_arches:
+        supported_arches = intel_arches
+    else:
+        supported_arches = []
+        logger.info("Need to add a list of supported arches for %s CPU", CPUARCH)
+    return supported_arches
+
 class GuestfsImage(object):
     """Class representing an image created by guestfs. 'size' is the
     desired image size, valid formats are a digit string (size in
@@ -202,6 +217,10 @@ class VirtInstallImage(object):
 
     def create(self, textinst, retries=3):
         """Create the image."""
+        if self.arch not in supported_arches():
+            logger.info("Won't create %s image on %s host", self.arch, CPUARCH)
+            return
+
         # figure out the best os-variant. NOTE: libosinfo >= 0.3.1
         # properly returns 1 on failure, but using workaround for old
         # bug where it didn't in case EPEL doesn't have 0.3.1
@@ -406,16 +425,6 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
     -2 means 'two releases lower than the "next" release', and so on.
     The values are the arches to build for that release.
     """
-    powerpc_arches = ['ppc64', 'ppc64le']
-    intel_arches = ['i686', 'x86_64']
-    if CPUARCH in powerpc_arches:
-        supported_arches = powerpc_arches
-    elif CPUARCH in intel_arches:
-        supported_arches = intel_arches
-    else:
-        supported_arches = []
-        logger.info("Need to add a list of supported arches for %s CPU", CPUARCH)
-
     imgs = []
     # Set this here so if we need to calculate it, we only do it once
     if not nextrel:
@@ -455,9 +464,6 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
             # assume a single integer release number
             rels = [release]
         for arch in arches:
-            if arch not in supported_arches:
-                logger.debug("%s arch ignored on %s CPU machine", arch,  CPUARCH)
-                continue
             for rel in rels:
                 imgs.append(
                     VirtInstallImage(name, rel, arch, variant=variant, size=size, imgver=imgver,
@@ -759,7 +765,7 @@ def parse_args(hdds):
             "this nor --release is set, createhdds will decide the appropriate "
             "arch(es) to build for each release. If this is not set but --release "
             "is set, only x86_64 image(s) will be built.",
-            choices=('x86_64', 'i686'))
+            choices=('x86_64', 'i686', 'ppc64le', 'ppc64'))
         imgparser.set_defaults(func=cli_image)
         # Here we're stuffing the type of the image and the dict from
         # hdds into args for cli_image() to use.
