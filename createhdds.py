@@ -305,6 +305,9 @@ class VirtInstallImage(object):
                 ret = subprocess.call(args, timeout=3600)
             except subprocess.TimeoutExpired:
                 logger.warning("Image creation timed out!")
+                dom.destroy()
+                dom.undefine()
+                conn.close()
                 if os.path.isfile(tmpfile):
                     os.remove(tmpfile)
                 if retries:
