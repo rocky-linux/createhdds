@@ -305,8 +305,18 @@ class VirtInstallImage(object):
                 ret = subprocess.call(args, timeout=3600)
             except subprocess.TimeoutExpired:
                 logger.warning("Image creation timed out!")
-                dom.destroy()
-                dom.undefine()
+                # clean up the domain again
+                conn = libvirt.open()
+                dom = conn.lookupByName('createhdds')
+                try:
+                    dom.destroy()
+                except libvirt.libvirtError:
+                    # maybe it died already
+                    pass
+                try:
+                    dom.undefine()
+                except libvirt.libvirtError:
+                    pass
                 conn.close()
                 if os.path.isfile(tmpfile):
                     os.remove(tmpfile)
