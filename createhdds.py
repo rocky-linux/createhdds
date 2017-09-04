@@ -250,15 +250,16 @@ class VirtInstallImage(object):
 
         tmpfile = "{0}.tmp".format(self.filename)
         arch = self.arch
-        fedoradir = ''
+        fedoradir = 'fedora/linux'
+        memsize = '2048'
         if arch == 'i686':
             arch = 'i386'
         if arch in ['ppc64','ppc64le']:
             fedoradir = 'fedora-secondary'
             memsize = '4096'
-        else:
-            fedoradir = 'fedora/linux'
-            memsize = '2048'
+        if arch == 'i386' and (self.release.lower() == 'rawhide' or int(self.release) > 25):
+            # from F26 onwards, i686 is in fedora-secondary
+            fedoradir = 'fedora-secondary'
 
         variant = self.variant
         # For F26, the installer images in the Workstation tree seem to be
@@ -278,9 +279,6 @@ class VirtInstallImage(object):
                 loctmp = "https://dl.fedoraproject.org/pub/{0}/development/{0}/{1}/{2}/os/"
             else:
                 loctmp = "https://download.fedoraproject.org/pub/{0}/releases/{1}/{2}/{3}/os/"
-                if arch == 'i686' and int(self.release) > 25:
-                    # from F26 onwards, i686 is in fedora-secondary
-                    fedoradir = 'fedora-secondary'
             xargs = "inst.ks=file:/{0}.ks".format(self.name)
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
