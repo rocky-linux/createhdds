@@ -257,7 +257,7 @@ class VirtInstallImage(object):
         if arch in ['ppc64','ppc64le']:
             fedoradir = 'fedora-secondary'
             memsize = '4096'
-        if arch == 'i386' and (self.release.lower() == 'rawhide' or int(self.release) > 25):
+        if arch == 'i386' and (str(self.release).lower() == 'rawhide' or int(self.release) > 25):
             # from F26 onwards, i686 is in fedora-secondary
             fedoradir = 'fedora-secondary'
 
@@ -272,7 +272,7 @@ class VirtInstallImage(object):
             # this is almost complex enough to need fedfind but not
             # quite, I think. also fedfind can't find the 'transient'
             # rawhide and branched locations at present
-            if self.release == 'rawhide':
+            if str(self.release).lower() == 'rawhide':
                 loctmp = "https://dl.fedoraproject.org/pub/{0}/development/rawhide/{2}/{3}/os"
             elif int(self.release) > fedfind.helpers.get_current_release(branched=False):
                 # branched
