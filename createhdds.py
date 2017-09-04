@@ -250,41 +250,42 @@ class VirtInstallImage(object):
 
         tmpfile = "{0}.tmp".format(self.filename)
         arch = self.arch
+        fedoradir = ''
+        if arch == 'i686':
+            arch = 'i386'
+        if arch in ['ppc64','ppc64le']:
+            fedoradir = 'fedora-secondary'
+            memsize = '4096'
+        else:
+            fedoradir = 'fedora/linux'
+            memsize = '2048'
+
+        variant = self.variant
+        # For F26, the installer images in the Workstation tree seem to be
+        # the OStree installer (they're much bigger than they should be),
+        # so use Everything instead of Workstation for F26
+        if int(self.release) == 26 and variant == "Workstation":
+            variant = "Everything"
+
         try:
-            # different url path between primary and secondary arch
-            arch = self.arch
-            if arch in ['ppc64','ppc64le']:
-                fedoradir = 'fedora-secondary'
-                memsize = '4096'
-            else:
-                fedoradir = 'fedora/linux'
-                memsize = '2048'
             # this is almost complex enough to need fedfind but not
             # quite, I think. also fedfind can't find the 'transient'
             # rawhide and branched locations at present
             if self.release == 'rawhide':
-                loctmp = "https://dl.fedoraproject.org/pub/{0}/development/rawhide/{1}/{2}/os".format(fedoradir, self.variant, self.arch)
+                loctmp = "https://dl.fedoraproject.org/pub/{0}/development/rawhide/{2}/{3}/os"
             elif int(self.release) > fedfind.helpers.get_current_release(branched=False):
                 # branched
-                loctmp = "https://dl.fedoraproject.org/pub/{3}/development/{0}/{1}/{2}/os/".format(self.release, self.variant, self.arch, fedoradir)
+                loctmp = "https://dl.fedoraproject.org/pub/{0}/development/{0}/{1}/{2}/os/"
             else:
+                loctmp = "https://download.fedoraproject.org/pub/{0}/releases/{1}/{2}/{3}/os/"
                 if arch == 'i686' and int(self.release) > 25:
                     # from F26 onwards, i686 is in fedora-secondary
                     fedoradir = 'fedora-secondary'
-                loctmp = "https://download.fedoraproject.org/pub/{3}/releases/{0}/{1}/{2}/os/".format(self.release, self.variant, self.arch, fedoradir)
-            if arch == 'i686':
-                arch = 'i386'
             xargs = "inst.ks=file:/{0}.ks".format(self.name)
-            variant = self.variant
-            # For F26, the installer images in the Workstation tree seem to be
-            # the OStree installer (they're much bigger than they should be),
-            # so use Everything instead of Workstation for F26
-            if int(self.release) == 26 and variant == "Workstation":
-                variant = "Everything"
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
                     "{0}/{1}.ks".format(SCRIPTDIR, self.name), "--location",
-                    loctmp.format(str(self.release), variant, arch), "--name", "createhdds",
+                    loctmp.format(fedoradir, str(self.release), variant, arch), "--name", "createhdds",
                     "--memory", memsize , "--noreboot", "--wait", "-1"]
             if textinst:
                 args.extend(("--graphics", "none", "--extra-args", "console=ttyS0"))
