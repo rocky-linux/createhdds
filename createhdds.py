@@ -276,7 +276,7 @@ class VirtInstallImage(object):
                 loctmp = "https://dl.fedoraproject.org/pub/{0}/development/rawhide/{2}/{3}/os"
             elif int(self.release) > fedfind.helpers.get_current_release(branched=False):
                 # branched
-                loctmp = "https://dl.fedoraproject.org/pub/{0}/development/{0}/{1}/{2}/os/"
+                loctmp = "https://dl.fedoraproject.org/pub/{0}/development/{1}/{2}/os/"
             else:
                 loctmp = "https://download.fedoraproject.org/pub/{0}/releases/{1}/{2}/{3}/os/"
             xargs = "inst.ks=file:/{0}.ks".format(self.name)
