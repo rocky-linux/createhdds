@@ -60,8 +60,8 @@ def supported_arches():
     """Provides a list of the arches for which virt-install images can
     be built on this host.
     """
-    powerpc_arches = ['ppc64', 'ppc64le']
-    intel_arches = ['i686', 'x86_64']
+    powerpc_arches = ['ppc64', 'ppc64le', 'noarch']
+    intel_arches = ['i686', 'x86_64', 'noarch']
     if CPUARCH in powerpc_arches:
         supported_arches = powerpc_arches
     elif CPUARCH in intel_arches:
@@ -93,6 +93,7 @@ class GuestfsImage(object):
     def __init__(self, name, size, imgver='', filesystem='ext4', label='mbr', parts=None,
                  writes=None, uploads=None, name_extras=None):
         self.name = name
+        self.arch = 'noarch'
         self.size = handle_size(size)
         # guestfs images are never outdated
         self.outdated = False
@@ -568,7 +569,7 @@ def check(hdds, nextrel=None):
 
     # Now determine if images are absent or outdated
     for img in expected:
-        if not os.path.isfile(img.filename):
+        if img.arch in supported_arches() and not os.path.isfile(img.filename):
             missing.append(img)
             continue
         if img.outdated:
