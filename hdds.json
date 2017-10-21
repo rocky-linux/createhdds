@@ -140,7 +140,7 @@
                 "branched": ["x86_64"]
             },
             "size" : "20",
-            "imgver": "3",
+            "imgver": "4",
             "variant": "Workstation"
         },
         {

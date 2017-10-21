@@ -10,6 +10,7 @@ clearpart --all
 autopart
 rootpw --plaintext weakpassword
 user --name=test --password=weakpassword --plaintext
+firstboot --enable
 poweroff
 
 %packages
