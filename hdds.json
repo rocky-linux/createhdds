@@ -127,8 +127,8 @@
         {
             "name" : "minimal",
             "releases" : {
-                "-1" : ["x86_64", "ppc64le", "ppc64"],
-                "-2" : ["x86_64", "ppc64le", "ppc64"]
+                "-1" : ["x86_64", "ppc64le", "ppc64", "aarch64"],
+                "-2" : ["x86_64", "ppc64le", "ppc64", "aarch64"]
             },
             "size" : "6",
             "imgver": "2"
@@ -155,8 +155,8 @@
         {
             "name" : "server",
             "releases" : {
-                "stable" : ["x86_64", "ppc64le", "ppc64"],
-                "branched": ["x86_64", "ppc64le", "ppc64"]
+                "stable" : ["x86_64", "ppc64le", "ppc64", "aarch64"],
+                "branched": ["x86_64", "ppc64le", "ppc64", "aarch64"]
             },
             "size" : "6",
             "imgver": "3",
@@ -174,7 +174,7 @@
         {
             "name" : "support",
             "releases" : {
-                "current" : ["x86_64", "ppc64le", "ppc64"]
+                "current" : ["x86_64", "ppc64le", "ppc64", "aarch64"]
             },
             "size" : "6",
             "imgver" : "3"

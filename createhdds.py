@@ -62,10 +62,13 @@ def supported_arches():
     """
     powerpc_arches = ['ppc64', 'ppc64le', 'noarch']
     intel_arches = ['i686', 'x86_64', 'noarch']
+    aarch64_arches = ['aarch64', 'armv7l']
     if CPUARCH in powerpc_arches:
         supported_arches = powerpc_arches
     elif CPUARCH in intel_arches:
         supported_arches = intel_arches
+    elif CPUARCH == 'aarch64':
+        supported_arches = aarch64_arches
     else:
         supported_arches = []
         logger.info("Need to add a list of supported arches for %s CPU", CPUARCH)
