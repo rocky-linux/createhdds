@@ -263,6 +263,8 @@ class VirtInstallImage(object):
         if arch in ['ppc64','ppc64le']:
             fedoradir = 'fedora-secondary'
             memsize = '4096'
+        if arch == 'aarch64' and str(self.release).isdigit() and int(self.release) < 28:
+            fedoradir = 'fedora-secondary'
         if arch == 'i386' and (str(self.release).lower() == 'rawhide' or int(self.release) > 25):
             # from F26 onwards, i686 is in fedora-secondary
             fedoradir = 'fedora-secondary'
