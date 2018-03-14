@@ -248,7 +248,7 @@ class VirtInstallImage(object):
             except libvirt.libvirtError:
                 # domain may not be running, so this is fine
                 pass
-            dom.undefine()
+            dom.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_NVRAM)
         except libvirt.libvirtError:
             # domain may not exist, so this is fine
             pass
@@ -321,7 +321,7 @@ class VirtInstallImage(object):
                     # maybe it died already
                     pass
                 try:
-                    dom.undefine()
+                    dom.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_NVRAM)
                 except libvirt.libvirtError:
                     pass
                 conn.close()
@@ -351,7 +351,7 @@ class VirtInstallImage(object):
             # the domain
             os.rename(tmpfile, self.filename)
             os.chmod(self.filename, 0o644)
-            dom.undefine()
+            dom.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_NVRAM)
             conn.close()
         except:
             # if anything went wrong, we want to wipe the temp file
