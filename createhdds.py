@@ -224,7 +224,7 @@ class VirtInstallImage(object):
         if self.arch not in supported_arches():
             logger.info("Won't create %s image on %s host. This is normal, don't worry. If you "
                         "intend to have %s workers you will need to run createhdds again on one "
-                        "of them to create their base images", self.arch, CPUARCH, CPUARCH)
+                        "of them to create their base images", self.arch, CPUARCH, self.arch)
             return
 
         # figure out the best os-variant. NOTE: libosinfo >= 0.3.1
