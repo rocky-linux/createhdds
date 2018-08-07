@@ -288,7 +288,7 @@ class VirtInstallImage(object):
             else:
                 # sigh i hate life
                 if int(self.release < 27):
-                    loctmp = "https://archives.fedoraproject.org/pub/archive/{0}/linux/releases/{1}/{2}/{3}/os/"
+                    loctmp = "https://archives.fedoraproject.org/pub/archive/{0}/releases/{1}/{2}/{3}/os/"
                 else:
                     loctmp = "https://download.fedoraproject.org/pub/{0}/releases/{1}/{2}/{3}/os/"
             xargs = "inst.ks=file:/{0}.ks".format(self.name)
