@@ -178,8 +178,8 @@
             "releases" : {
                 "current" : ["x86_64", "ppc64le", "ppc64", "aarch64"]
             },
-            "size" : "6",
-            "imgver" : "3"
+            "size" : "7",
+            "imgver" : "4"
         }
     ],
     "renames" : []
