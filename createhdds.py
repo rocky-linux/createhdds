@@ -492,6 +492,11 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
             rels = [release]
         for arch in arches:
             for rel in rels:
+                # ppc64 was retired for f29; let's filter out all ppc64
+                # images for f29 and later. Once f28 is EOL we can just
+                # ditch them from hdds.json and remove this
+                if arch == 'ppc64' and (rel == 'rawhide' or int(rel) > 28):
+                    continue
                 imgs.append(
                     VirtInstallImage(name, rel, arch, variant=variant, size=size, imgver=imgver,
                                      maxage=maxage))
