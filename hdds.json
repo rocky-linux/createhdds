@@ -105,7 +105,7 @@
         {
             "name" : "shrink",
             "size" : "10G",
-            "labels" : ["mbr", "gpt"],
+            "labels" : ["mbr"],
             "filesystems" : ["ext4", "ntfs"],
             "parts" : [
                 {
