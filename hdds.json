@@ -132,8 +132,8 @@
                 "stable": ["x86_64"],
                 "branched": ["x86_64"]
             },
-            "size" : "6",
-            "imgver": "2"
+            "size" : "9",
+            "imgver": "3"
         },
         {
             "name" : "desktop",
