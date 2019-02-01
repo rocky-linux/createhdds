@@ -269,13 +269,6 @@ class VirtInstallImage(object):
             # from F26 onwards, i686 is in fedora-secondary
             fedoradir = 'fedora-secondary'
 
-        variant = self.variant
-        # For F26, the installer images in the Workstation tree seem to be
-        # the OStree installer (they're much bigger than they should be),
-        # so use Everything instead of Workstation for F26
-        if int(self.release) == 26 and variant == "Workstation":
-            variant = "Everything"
-
         try:
             # this is almost complex enough to need fedfind but not
             # quite, I think. also fedfind can't find the 'transient'
@@ -287,7 +280,7 @@ class VirtInstallImage(object):
                 loctmp = "https://dl.fedoraproject.org/pub/{0}/development/{1}/{2}/{3}/os/"
             else:
                 # sigh i hate life
-                if int(self.release) < 27:
+                if int(self.release) < 28:
                     loctmp = "https://archives.fedoraproject.org/pub/archive/{0}/releases/{1}/{2}/{3}/os/"
                 else:
                     loctmp = "https://download.fedoraproject.org/pub/{0}/releases/{1}/{2}/{3}/os/"
@@ -301,7 +294,7 @@ class VirtInstallImage(object):
                 args.extend(("--graphics", "none", "--extra-args", "console=ttyS0"))
             else:
                 args.extend(("--graphics", "vnc", "--noautoconsole"))
-            if arch in ['ppc64','ppc64le'] and (str(self.release).lower() == 'rawhide' or int(self.release) > 27):
+            if arch == 'ppc64le' and (str(self.release).lower() == 'rawhide' or int(self.release) > 27):
                 logger.info("disable plymouth as bypass bug#1571860")
                 args.extend(("--extra-args", "plymouth.enable=0"))
             # this is a hacky workaround for a weird bug on Fedora's prod
