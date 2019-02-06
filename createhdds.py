@@ -269,6 +269,8 @@ class VirtInstallImage(object):
             # from F26 onwards, i686 is in fedora-secondary
             fedoradir = 'fedora-secondary'
 
+        variant = self.variant
+
         try:
             # this is almost complex enough to need fedfind but not
             # quite, I think. also fedfind can't find the 'transient'
