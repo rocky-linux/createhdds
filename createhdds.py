@@ -296,9 +296,6 @@ class VirtInstallImage(object):
                 args.extend(("--graphics", "none", "--extra-args", "console=ttyS0"))
             else:
                 args.extend(("--graphics", "vnc", "--noautoconsole"))
-            if arch == 'ppc64le' and (str(self.release).lower() == 'rawhide' or int(self.release) > 27):
-                logger.info("disable plymouth as bypass bug#1571860")
-                args.extend(("--extra-args", "plymouth.enable=0"))
             # this is a hacky workaround for a weird bug on Fedora's prod
             # openQA server:
             # https://bugzilla.redhat.com/show_bug.cgi?id=1387798
