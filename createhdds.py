@@ -147,9 +147,15 @@ class GuestfsImage(object):
                 # start and end sector numbers - more details in
                 # guestfs docs
                 gfs.part_add(disk, part['type'], int(part['start']), int(part['end']))
-                # identify the partition and format it
-                partn = gfs.list_partitions()[-1]
-                gfs.mkfs(part['filesystem'], partn, label=part.get('label'))
+                # identify the partition
+                partname = gfs.list_partitions()[-1]
+                partnum = gfs.part_list(disk)[-1]["part_num"]
+                # sometimes, we want to set the gpt type of the partition
+                gpt_type = part.get("gpt_type", None)
+                if gpt_type:
+                    gfs.part_set_gpt_type(disk, partnum, gpt_type)
+                # format the partition    
+                gfs.mkfs(part['filesystem'], partname, label=part.get('label'))
             # do file 'writes' (create a file with a given string as
             # its content)
             for write in self.writes:
