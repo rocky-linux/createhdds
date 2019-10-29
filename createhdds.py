@@ -226,6 +226,11 @@ class VirtInstallImage(object):
                         "intend to have %s workers you will need to run createhdds again on one "
                         "of them to create their base images", self.arch, CPUARCH, self.arch)
             return
+        if self.arch in ('i386', 'i686'):
+            if str(self.release).lower() == 'rawhide' or int(self.release) > 30:
+                # we just don't support this any more, since F31
+                logger.warning("Cannot create i686 images for releases after Fedora 30!")
+                return
 
         # figure out the best os-variant. NOTE: libosinfo >= 0.3.1
         # properly returns 1 on failure, but using workaround for old
