@@ -263,10 +263,8 @@ class VirtInstallImage(object):
         if arch in ['ppc64','ppc64le']:
             fedoradir = 'fedora-secondary'
             memsize = '4096'
-        if arch == 'aarch64' and str(self.release).isdigit() and int(self.release) < 28:
-            fedoradir = 'fedora-secondary'
-        if arch == 'i386' and (str(self.release).lower() == 'rawhide' or int(self.release) > 25):
-            # from F26 onwards, i686 is in fedora-secondary
+        if arch == 'i386':
+            # i686 is in fedora-secondary (until it died)
             fedoradir = 'fedora-secondary'
 
         variant = self.variant
@@ -285,11 +283,7 @@ class VirtInstallImage(object):
                 # branched
                 loctmp = "https://dl.fedoraproject.org/pub/{0}/development/{1}/{2}/{3}/os/"
             else:
-                # sigh i hate life
-                if int(self.release) < 28:
-                    loctmp = "https://archives.fedoraproject.org/pub/archive/{0}/releases/{1}/{2}/{3}/os/"
-                else:
-                    loctmp = "https://download.fedoraproject.org/pub/{0}/releases/{1}/{2}/{3}/os/"
+                loctmp = "https://download.fedoraproject.org/pub/{0}/releases/{1}/{2}/{3}/os/"
             xargs = "inst.ks=file:/{0}.ks".format(self.name)
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
