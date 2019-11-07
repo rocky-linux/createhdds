@@ -298,6 +298,10 @@ class VirtInstallImage(object):
             # openQA server:
             # https://bugzilla.redhat.com/show_bug.cgi?id=1387798
             args.extend(("--network", "user"))
+            # Workaround a qemu/ppc64 bug in F31:
+            # https://bugzilla.redhat.com/show_bug.cgi?id=1769600
+            if arch in ['ppc64','ppc64le']:
+                args.extend(("--machine", "pseries-4.0"))
             # run the command, timing out after 1 hour; sometimes creation
             # seems to just get mysteriously stuck, we need to bail and
             # retry in this case
