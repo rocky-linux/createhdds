@@ -136,6 +136,18 @@
             "imgver": "3"
         },
         {
+            "name" : "minimal-uefi",
+            "releases" : {
+                "-1" : ["x86_64"],
+                "-2" : ["x86_64"],
+                "stable": ["x86_64"],
+                "branched": ["x86_64"]
+            },
+            "size" : "20",
+            "imgver": "3",
+            "bootopts": "uefi"
+        },
+        {
             "name" : "desktop",
             "releases" : {
                 "stable" : ["x86_64", "i686"],

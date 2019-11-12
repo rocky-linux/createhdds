@@ -198,9 +198,10 @@ class VirtInstallImage(object):
     included in the image file name if specified. 'maxage' is the
     maximum age of the image file (in days) - if the image is older
     than this, 'check' will report it as 'outdated' and 'all' will
-    rebuild it.
+    rebuild it. 'bootopts' are used to pass boot options to the
+    virtual image to provide better control of the VM.
     """
-    def __init__(self, name, release, arch, size, variant=None, imgver='', maxage=14):
+    def __init__(self, name, release, arch, size, variant=None, imgver='', maxage=14, bootopts=None):
         self.name = name
         self.size = size
         self.filename = "disk_f{0}_{1}".format(str(release), name)
@@ -218,6 +219,7 @@ class VirtInstallImage(object):
                 self.variant = "Server"
             else:
                 self.variant = "Everything"
+        self.bootopts = bootopts
 
     def create(self, textinst, retries=3):
         """Create the image."""
@@ -272,7 +274,7 @@ class VirtInstallImage(object):
         # build Workstation images out of Everything
         if variant == 'Workstation' and str(self.release).isdigit() and int(self.release) > 30:
             variant = 'Everything'
-
+        
         try:
             # this is almost complex enough to need fedfind but not
             # quite, I think. also fedfind can't find the 'transient'
@@ -289,7 +291,9 @@ class VirtInstallImage(object):
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
                     "{0}/{1}.ks".format(SCRIPTDIR, self.name), "--location",
                     loctmp.format(fedoradir, str(self.release), variant, arch), "--name", "createhdds",
-                    "--memory", memsize , "--noreboot", "--wait", "-1"]
+                    "--memory", memsize, "--noreboot", "--wait", "-1"]
+            if self.bootopts:
+                args.extend(("--boot", self.bootopts))
             if textinst:
                 args.extend(("--graphics", "none", "--extra-args", "console=ttyS0"))
             else:
@@ -459,6 +463,7 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
         releases = imggrp['releases']
     size = imggrp.get('size', 0)
     imgver = imggrp.get('imgver')
+    bootopts = imggrp.get('bootopts')
     # add an image for each release/arch combination
     for (release, arches) in releases.items():
         if release.lower() == 'branched':
@@ -493,7 +498,7 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
                     continue
                 imgs.append(
                     VirtInstallImage(name, rel, arch, variant=variant, size=size, imgver=imgver,
-                                     maxage=maxage))
+                                     maxage=maxage, bootopts=bootopts))
     return imgs
 
 def get_all_images(hdds, nextrel=None):
