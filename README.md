@@ -56,7 +56,7 @@ Optional keys are:
 
 * `filesystem` - if set, this partition will *always* have this filesystem. If not set, the filesystem will be determined according to the image group's `filesystems` value (see below).
 * `label` - if set, this partition will have this label
-
+* `gpt-type` - if set, the partition will be of the type defined by the partition GUID. 
 #### `writes`
 
 This key is **optional**. Its value is a list of dicts. Each dict represents a single file that should be created on one of the partitions in the image. There are exactly three required keys for the dict:
@@ -75,7 +75,7 @@ This key is **optional**. Its value is a list of dicts. Each dict represents a s
 
 There's currently no provision for uploading a *local* file, or any protocol besides http/https (you can use either).
 
-#### `labels` and `filesystems`
+#### `labels`, `filesystems` and `gpt-type`
 
 These keys are **optional**. Each one's value is a list of strings. These keys together determine how many image variants are expected to be produced from the image group. If not set, the default value of `labels` is ['mbr'], and the default value of `filesystems` is ['ext4'] (both single-item lists). For each `guestfs` image group, the expected images will be the combinations of `labels` and `filesystems`. This means that if you don't set either key, or you set either key to a single item list, only a single image will be expected. If you set `labels` to a two-item list and `filesystems` to a single-item list, two images will be expected. If you set both keys to a two-item list, four images will be expected...and so on.
 
@@ -85,11 +85,13 @@ For `labels`, the values represent disk label types, and are passed to guestfs. 
 
 For `filesystems`, the values represent...filesystems. Any of the partitions defined in `parts` (see above) which does not specify a `filesystem` will be formatted with this filesystem.
 
+The `gpt_type` enables you to specify the *type* of your partition, based on the GUID number (see https://en.wikipedia.org/wiki/GUID_Partition_Table), so it is useful when you want to simulate a partition layout with certain partition types, such as *swap*, *boot*, and *root* partitions. You can also simulate partition types from different operating systems. Note that this option is only fully supported by the `gpt` partition layout, although some GUIDs do work for `mbr` partitions, too.
+
 Let's consider some examples!
 
 Say an image group specifies `name : "blank"`, `labels : ["mbr", "gpt"]` and does not specify `filesystems`. There will be two expected images: `disk_blank_mbr.img` and `disk_blank_gpt.img`. The former will have an MBR disk label, the latter a GPT disk label. In all other respects, the images will be identical. If any partition does not specify a filesystem, it will be formatted as `ext4` (as the default for `filesystems` is `['ext4']`).
 
-Say an image group specifies `name : "blank"`, `filesystems : ["ext4", "ntfs"]` and does not specify `labels`. There will be two expected images: `disk_blank_ext4.img` and `disk_blank_ntfs.img`. Both will have an MBR disk label (as the default for `labels` is `['mbr']`). On the former, all partitions which do not specify a `filesystem` will be formatted as ext4; on the latter, all partitions which do not specify a `filesystem` will be formatted as ntfs. In all other respects the images will be identical. As a special note: it is nonsense to specify multiple `filesystems`, but also explicitly specify a `filesystem` for each partition in `parts`. This will result in the creation of multiple identical images, because none of the values from `filesystems` will actually do anything. However, it's perfectly reasonable to have an image group with *some* partitions that explicitly specify a filesystem and *some* that do not, and then have multiple filesystem variants - say, you want multiple variant images with the data partitions formatted using different filesystems, but you want the `/boot` partition in each variant to be ext4.
+Say an image group specifies `name : "blank"`, `filesystems : ["ext4", "ntfs"]` and does not specify `labels`. There will be two expected images: `disk_blank_ext4.img` and `disk_blank_ntfs.img`. Both will have an MBR disk label (as the default for `labels` is `['mbr']`). On the former, all partitions which do not specify a `filesystem` will be formatted as ext4; on the latter, all partitions which do not specify a `filesystem` will be formatted as ntfs. In all other respects the images will be identical. As a special note: it is nonsense to specify multiple `filesystems`, but also explicitly specify a `filesystem` for each partition in `parts`. This will result in the creation of multiple identical images, because none of the values from `filesystems` will actually do anything. However, it's perfectly reasonable to have an image group with *some* partitions that explicitly specify a filesystem and *some* that do not, and then have multiple filesystem variants - say, you want multiple variant images with the data partitions formatted using different filesystems, but you want the `/boot` partition in each variant to be ext4. If you also want to specify the `boot` type of the partition, you can use the `gpt_type : "21686148-6449-6E6F-744E-656564454649"` option.
 
 Finally, say an image group specifies `name : "blank"`, `filesystems : ["ext4", "ntfs"]` and `labels : ["mbr", "gpt"]`. There will be *four* expected images, `disk_blank_ext4_mbr.img`, `disk_blank_ntfs_mbr.img`, `disk_blank_ext4_gpt.img`, `disk_blank_ntfs_gpt.img`. The `mbr` images will have MBR disk labels, the `gpt` images will have GPT disk labels, the `ext4` images will have partitions that don't explicitly specify a filesystem formatted as ext4, and the `ntfs` images will have partitions that don't explicitly specify a filesystem formatted as NTFS.
 
@@ -110,6 +112,10 @@ Note that `createhdds` attempts to only create images that are arch-compatible w
 #### `maxage`
 
 This key is **optional**. If not set, it defaults to 14. Its value should be an integer string. This basically indicates how often (as a number of days) the image should be rebuilt. virt-install images can go 'stale' - at build time we update the installed OS to the latest packages, but of course by the time the image is used, later updates may be available. If the test the image is used for needs all the latest packages to be installed, the test will have to install the later updates, and it's inefficient to have one or more tests doing that every day. So it makes sense to re-generate the images periodically so that the tests only have to install few if any updates. For any image group with a non-0 maxage, createhdds `check` and `any` modes will check any existing image file's age against maxage; if it exceeds the maxage `check` will consider it 'outdated', and `all` will rebuild it. To disable maxage checks for an image group, set `maxage` to 0.
+
+#### `bootopts`
+
+This key is **optional**. By setting it, you can pass *boot options* to the `virt-install` command to control the boot process of the virtual machine. For example, if you set `bootopts: "uefi"`, the newly created virtual machine will be booted in the EFI mode. For other boot options, see the **virt-install** manual pages.
 
 ### `ks` files
 
