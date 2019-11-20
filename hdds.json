@@ -150,6 +150,7 @@
         {
             "name" : "desktop",
             "releases" : {
+                "current" : ["aarch64", "ppc64le"],
                 "stable" : ["x86_64", "i686"],
                 "branched": ["x86_64"]
             },
