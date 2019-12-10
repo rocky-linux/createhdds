@@ -14,6 +14,16 @@ poweroff
 
 %packages
 @^kde-desktop-environment
+# these are all in the KDE live image, we want to match that as it's
+# the most common KDE deployment method
+@firefox
+@kde-apps
+@kde-media
+@kde-office
+@networkmanager-submodules
+fedora-release-kde
+falkon
+
 imsettings-qt
 -initial-setup
 -initial-setup-gui

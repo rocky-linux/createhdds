@@ -178,11 +178,11 @@
         {
             "name" : "kde",
             "releases" : {
-                "-1" : ["x86_64"],
-                "-2" : ["x86_64"]
+                "stable" : ["x86_64"],
+                "branched" : ["x86_64"]
             },
             "size" : "20",
-            "imgver": "3"
+            "imgver": "4"
         },
         {
             "name" : "support",
