@@ -159,8 +159,7 @@
         {
             "name" : "desktopencrypt",
             "releases" : {
-                "stable" : ["x86_64"],
-                "branched" : ["x86_64"]
+                "stable" : ["x86_64"]
             },
             "size" : "20",
             "variant": "Workstation"
