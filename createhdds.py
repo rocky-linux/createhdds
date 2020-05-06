@@ -456,7 +456,7 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
     -2 means 'two releases lower than the "next" release', and so on.
     The values are the arches to build for that release.
     """
-    imgs = []
+    imgs = {}
     # Set this here so if we need to calculate it, we only do it once
     if not nextrel:
         nextrel = 0
@@ -502,10 +502,11 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
                 # we can just ditch them from hdds.json and remove this
                 if arch == 'i686' and (rel == 'rawhide' or int(rel) > 30):
                     continue
-                imgs.append(
-                    VirtInstallImage(name, rel, arch, variant=variant, size=size, imgver=imgver,
-                                     maxage=maxage, bootopts=bootopts))
-    return imgs
+                key = "{0}-{1}".format(rel, arch)
+                # using a dict here avoids dupes
+                imgs[key] = VirtInstallImage(name, rel, arch, variant=variant, size=size,
+                                             imgver=imgver, maxage=maxage, bootopts=bootopts)
+    return list(imgs.values())
 
 def get_all_images(hdds, nextrel=None):
     """Simply iterates over the 'image group' dicts in hdds.json and
