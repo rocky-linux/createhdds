@@ -15,4 +15,5 @@ poweroff
 
 %packages
 @^workstation-product-environment
+-selinux-policy-minimum
 %end
