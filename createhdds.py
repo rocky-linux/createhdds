@@ -298,6 +298,9 @@ class VirtInstallImage(object):
                     "{0}/{1}.ks".format(SCRIPTDIR, self.name), "--location",
                     loctmp.format(fedoradir, str(self.release), variant, arch), "--name", "createhdds",
                     "--memory", memsize, "--noreboot", "--wait", "-1"]
+            if logger.getEffectiveLevel() == logging.DEBUG:
+                # let's get virt-install debug logs too
+                args.append("--debug")
             if self.bootopts:
                 args.extend(("--boot", self.bootopts))
             if textinst:
