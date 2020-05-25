@@ -24,6 +24,16 @@ poweroff
 fedora-release-kde
 falkon
 
+# FIXME: fedora-jam-kde-theme-2.0.0-1.fc31 provides kde-settings,
+# and anaconda prefers it to the real kde-settings for some reason,
+# so F31 images are getting fedora-jam-kde-theme instead of
+# kde-settings and this means they have the wrong background and
+# some other issues. This should be fixed by 3.0.0-1.fc31, so we
+# can probably remove this when
+# https://bodhi.fedoraproject.org/updates/FEDORA-2020-3753ee3716
+# is pushed stable
+-fedora-jam-kde-theme
+
 imsettings-qt
 -initial-setup
 -initial-setup-gui
