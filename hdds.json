@@ -54,7 +54,7 @@
         {
             "name" : "ks",
             "size" : "100M",
-            "imgver" : "3",
+            "imgver" : "4",
             "parts" : [
                 {
                     "filesystem" : "ext4",
