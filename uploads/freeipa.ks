@@ -1,7 +1,7 @@
 install
 cdrom
 bootloader --location=mbr
-network --device=link --activate --bootproto=static --ip=10.0.2.100 --netmask=255.255.255.0 --gateway=10.0.2.2 --hostname=ipa001.domain.local
+network --device=link --activate --bootproto=static --ip=172.16.2.100 --netmask=255.255.255.0 --gateway=172.16.2.2 --hostname=ipa001.domain.local
 lang en_US.UTF-8
 keyboard us
 timezone --utc America/New_York
