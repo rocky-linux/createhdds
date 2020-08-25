@@ -139,7 +139,8 @@
             "name" : "minimal-uefi",
             "releases" : {
                 "-1" : ["x86_64"],
-                "-2" : ["x86_64"]
+                "-2" : ["x86_64"],
+                "branched": ["x86_64"]
             },
             "size" : "10",
             "imgver": "3",
