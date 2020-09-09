@@ -5,7 +5,7 @@ url --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$relea
 repo --name=updates --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f$releasever&arch=$basearch
 # contains fix to get F33 backgrounds in KDE. Remove when
 # https://bodhi.fedoraproject.org/updates/FEDORA-2020-527d393bd7 goes stable
-repo --name=kdesettemp --url=https://www.happyassassin.net/temp/kdeback33/$releasever/$basearch
+repo --name=kdesettemp --baseurl=https://www.happyassassin.net/temp/kdeback33/$releasever/$basearch
 lang en_US.UTF-8
 keyboard us
 timezone --utc America/New_York
