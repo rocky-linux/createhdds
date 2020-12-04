@@ -14,3 +14,7 @@ poweroff
 %packages
 @core
 %end
+
+%post
+touch $INSTALL_ROOT/home/home_preserved
+%end
