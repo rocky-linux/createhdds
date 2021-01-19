@@ -1,4 +1,3 @@
-install
 bootloader --location=mbr
 network --device=link --activate --bootproto=dhcp
 url --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch

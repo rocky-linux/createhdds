@@ -1,4 +1,3 @@
-install
 cdrom
 bootloader --location=mbr
 network --device=link --activate --bootproto=static --ip=172.16.2.100 --netmask=255.255.255.0 --gateway=172.16.2.2 --hostname=ipa001.test.openqa.fedoraproject.org
