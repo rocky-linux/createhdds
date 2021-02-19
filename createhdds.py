@@ -483,11 +483,9 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
         elif release.lower() == 'stable':
             # this means "all current stable releases"
             rels = fedfind.helpers.get_current_stables()
-        elif release.lower() == 'current':
-            # this means "current stable release"
-            rels = [fedfind.helpers.get_current_release(branched=False)]
         elif release != 'rawhide' and int(release) < 0:
             # negative release indicates 'relative to next release'
+            # -1 is CURRREL, -2 is PREVREL
             if not nextrel:
                 nextrel = fedfind.helpers.get_current_release() + 1
             rels = [int(nextrel) + int(release)]
