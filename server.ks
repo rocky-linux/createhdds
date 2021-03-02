@@ -13,4 +13,5 @@ poweroff
 
 %packages
 @^server-product-environment
+plymouth-system-theme
 %end
