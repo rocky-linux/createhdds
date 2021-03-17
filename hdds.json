@@ -173,7 +173,7 @@
                 "stable" : ["x86_64", "ppc64le", "aarch64"],
                 "branched": ["x86_64", "ppc64le", "aarch64"]
             },
-            "size" : "6",
+            "size" : "7",
             "imgver": "3",
             "variant": "Server"
         },
