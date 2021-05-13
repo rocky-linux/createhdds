@@ -292,10 +292,17 @@ class VirtInstallImage(object):
                 loctmp = "https://dl.fedoraproject.org/pub/{0}/development/{1}/{2}/{3}/os/"
             else:
                 loctmp = "https://download.fedoraproject.org/pub/{0}/releases/{1}/{2}/{3}/os/"
-            xargs = "inst.ks=file:/{0}.ks".format(self.name)
+            ksfile = "{0}.ks".format(self.name)
+            if str(self.release) == "33" and self.name == "kde":
+                # FIXME: icky hack for https://bugzilla.redhat.com/show_bug.cgi?id=1960458
+                # would be good to improve this, otherwise drop it when F33 is EOL
+                ksfile = "{0}-{1}.ks".format(self.name, str(self.release))
+            xargs = "inst.ks=file:/{0}".format(ksfile)
+            if str(self.release) == "33" and self.name == "kde":
+                xargs = "inst.ks=file:/{0}-{1}.ks".format(self.name, str(self.release))
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
-                    "{0}/{1}.ks".format(SCRIPTDIR, self.name), "--location",
+                    "{0}/{1}".format(SCRIPTDIR, ksfile), "--location",
                     loctmp.format(fedoradir, str(self.release), variant, arch), "--name", "createhdds",
                     "--memory", memsize, "--noreboot", "--wait", "-1"]
             if logger.getEffectiveLevel() == logging.DEBUG:
