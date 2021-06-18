@@ -23,6 +23,7 @@ import argparse
 import logging
 import json
 import os
+import os.path
 import subprocess
 import sys
 import tempfile
@@ -227,6 +228,26 @@ class VirtInstallImage(object):
                 self.variant = "Everything"
         self.bootopts = bootopts
 
+    @property
+    def kickstart_file(self):
+        """Find the most specific kickstart file to use for a given
+        name, release and arch. Order of preference:
+        * name-release-arch.ks
+        * name-release.ks
+        * name-arch.ks
+        * name.ks
+        """
+        cands = [
+            f"{self.name}-{self.release}-{self.arch}.ks",
+            f"{self.name}-{self.release}.ks",
+            f"{self.name}-{self.arch}.ks",
+            f"{self.name}.ks"
+        ]
+        for cand in cands:
+            if os.path.isfile("/".join((SCRIPTDIR, cand))):
+                logger.debug("Using kickstart %s", cand)
+                return cand
+
     def create(self, textinst, retries=3):
         """Create the image."""
         if self.arch not in supported_arches():
@@ -292,14 +313,8 @@ class VirtInstallImage(object):
                 loctmp = "https://dl.fedoraproject.org/pub/{0}/development/{1}/{2}/{3}/os/"
             else:
                 loctmp = "https://download.fedoraproject.org/pub/{0}/releases/{1}/{2}/{3}/os/"
-            ksfile = "{0}.ks".format(self.name)
-            if str(self.release) == "33" and self.name == "kde":
-                # FIXME: icky hack for https://bugzilla.redhat.com/show_bug.cgi?id=1960458
-                # would be good to improve this, otherwise drop it when F33 is EOL
-                ksfile = "{0}-{1}.ks".format(self.name, str(self.release))
+            ksfile = self.kickstart_file
             xargs = "inst.ks=file:/{0}".format(ksfile)
-            if str(self.release) == "33" and self.name == "kde":
-                xargs = "inst.ks=file:/{0}-{1}.ks".format(self.name, str(self.release))
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
                     "{0}/{1}".format(SCRIPTDIR, ksfile), "--location",

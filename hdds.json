@@ -149,9 +149,9 @@
         {
             "name" : "desktop",
             "releases" : {
-                "-1" : ["aarch64", "ppc64le"],
-                "stable" : ["x86_64"],
-                "branched": ["x86_64"]
+                "-1" : ["ppc64le"],
+                "stable" : ["x86_64", "aarch64"],
+                "branched": ["x86_64", "aarch64"]
             },
             "size" : "20",
             "imgver": "4",
@@ -160,8 +160,8 @@
         {
             "name" : "desktopencrypt",
             "releases" : {
-                "stable" : ["x86_64"],
-                "branched" : ["x86_64"]
+                "stable" : ["x86_64", "aarch64"],
+                "branched" : ["x86_64", "aarch64"]
             },
             "size" : "20",
             "variant": "Workstation"
