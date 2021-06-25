@@ -2,9 +2,6 @@ bootloader --location=mbr
 network --bootproto=dhcp
 url --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch
 repo --name=updates --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f$releasever&arch=$basearch
-# contains fix for fwupd affecting GNOME Software. Remove when
-# fwupd-1.5.1-2 updates goes stable
-repo --name=fwupd1512 --baseurl=https://www.happyassassin.net/temp/fwupd1512/$releasever/$basearch
 lang en_US.UTF-8
 keyboard us
 timezone --utc America/New_York
