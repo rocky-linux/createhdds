@@ -2,6 +2,10 @@ bootloader --location=mbr
 network --bootproto=dhcp
 url --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch
 repo --name=updates --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f$releasever&arch=$basearch
+# contains FEDORA-2021-085f0122dd for F35 to fix KDE background, remove
+# when stable
+repo --name=f35-kde-bg --baseurl=https://fedorapeople.org/groups/qa/openqa-repos/f35-kde-bg/$releasever
+
 lang en_US.UTF-8
 keyboard us
 timezone --utc America/New_York
