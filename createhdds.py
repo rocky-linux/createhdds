@@ -617,7 +617,7 @@ def check(hdds, nextrel=None):
             # handle renaming qcow2 images from old ('.img') to new ('.qcow2')
             oldfn = img.filename.replace(".qcow2", ".img")
             if os.path.isfile(oldfn):
-                os.rename(olfdn, img.filename)
+                os.rename(oldfn, img.filename)
                 if img.outdated:
                     outdated.append(img)
             else:
