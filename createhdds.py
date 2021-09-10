@@ -286,7 +286,7 @@ class VirtInstallImage(object):
         tmpfile = "{0}.tmp".format(self.filename)
         arch = self.arch
         fedoradir = 'fedora/linux'
-        memsize = '2048'
+        memsize = '3072'
         if arch == 'i686':
             arch = 'i386'
         if arch in ['ppc64','ppc64le']:
