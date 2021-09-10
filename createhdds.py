@@ -214,7 +214,7 @@ class VirtInstallImage(object):
         self.filename = "disk_f{0}_{1}".format(str(release), name)
         if imgver:
             self.filename = "{0}_{1}".format(self.filename, imgver)
-        self.filename = "{0}_{1}.img".format(self.filename, arch)
+        self.filename = "{0}_{1}.qcow2".format(self.filename, arch)
         self.release = release
         self.variant = variant
         self.arch = arch
@@ -614,7 +614,14 @@ def check(hdds, nextrel=None):
     # Now determine if images are absent or outdated
     for img in expected:
         if img.arch in supported_arches() and not os.path.isfile(img.filename):
-            missing.append(img)
+            # handle renaming qcow2 images from old ('.img') to new ('.qcow2')
+            oldfn = img.filename.replace(".qcow2", ".img")
+            if os.path.isfile(oldfn):
+                os.rename(olfdn, img.filename)
+                if img.outdated:
+                    outdated.append(img)
+            else:
+                missing.append(img)
             continue
         if img.outdated:
             outdated.append(img)
