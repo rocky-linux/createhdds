@@ -605,11 +605,6 @@ def check(hdds, nextrel=None):
     unknown = []
     # Get the list of all 'expected' images
     expected = get_all_images(hdds, nextrel=nextrel)
-    # Get the list of all present image files
-    files = set(fl for fl in os.listdir('.') if fl.startswith('disk') and fl.endswith('img'))
-    # Compare present images vs. expected images to produce 'unknown'
-    expnames = set(img.filename for img in expected)
-    unknown = list(files.difference(expnames))
 
     # Now determine if images are absent or outdated
     for img in expected:
@@ -627,6 +622,12 @@ def check(hdds, nextrel=None):
             outdated.append(img)
             continue
         current.append(img)
+
+    # Get the list of all present image files
+    files = set(fl for fl in os.listdir('.') if fl.startswith('disk') and (fl.endswith('img') or fl.endswith('qcow2')))
+    # Compare present images vs. expected images to produce 'unknown'
+    expnames = set(img.filename for img in expected)
+    unknown = list(files.difference(expnames))
 
     logger.debug("Current images: %s", ', '.join([img.filename for img in current]))
     logger.debug("Missing images: %s", ', '.join([img.filename for img in missing]))
