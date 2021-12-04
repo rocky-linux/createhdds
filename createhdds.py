@@ -29,7 +29,6 @@ import sys
 import tempfile
 import time
 
-import fedfind.helpers
 import guestfs
 import libvirt
 import platform
@@ -303,16 +302,6 @@ class VirtInstallImage(object):
             variant = 'Everything'
         
         try:
-            # this is almost complex enough to need fedfind but not
-            # quite, I think. also fedfind can't find the 'transient'
-            # rawhide and branched locations at present
-            if str(self.release).lower() == 'rawhide':
-                loctmp = "https://dl.fedoraproject.org/pub/{0}/development/rawhide/{2}/{3}/os"
-            elif int(self.release) > fedfind.helpers.get_current_release(branched=False):
-                # branched
-                loctmp = "https://dl.fedoraproject.org/pub/{0}/development/{1}/{2}/{3}/os/"
-            else:
-                loctmp = "https://download.fedoraproject.org/pub/{0}/releases/{1}/{2}/{3}/os/"
             ksfile = self.kickstart_file
             xargs = "inst.ks=file:/{0}".format(ksfile)
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
@@ -493,27 +482,6 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
     bootopts = imggrp.get('bootopts')
     # add an image for each release/arch combination
     for (release, arches) in releases.items():
-        if release.lower() == 'branched':
-            # find Branched, if it exists
-            curr = fedfind.helpers.get_current_release(branched=False)
-            branch = fedfind.helpers.get_current_release(branched=True)
-            if branch > curr:
-                rels = [branch]
-            else:
-                logger.info("Branched image requested, but Branched does not currently exist")
-                continue
-        elif release.lower() == 'stable':
-            # this means "all current stable releases"
-            rels = fedfind.helpers.get_current_stables()
-        elif release != 'rawhide' and int(release) < 0:
-            # negative release indicates 'relative to next release'
-            # -1 is CURRREL, -2 is PREVREL
-            if not nextrel:
-                nextrel = fedfind.helpers.get_current_release() + 1
-            rels = [int(nextrel) + int(release)]
-        else:
-            # assume a single integer release number
-            rels = [release]
         for arch in arches:
             for rel in rels:
                 # i686 images can't be created from f31 on; let's filter
