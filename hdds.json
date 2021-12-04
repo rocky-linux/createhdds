@@ -54,7 +54,6 @@
         {
             "name" : "ks",
             "size" : "100M",
-            "imgver" : "6",
             "parts" : [
                 {
                     "filesystem" : "ext4",
@@ -84,7 +83,6 @@
         {
             "name" : "updates_img",
             "size" : "100M",
-            "imgver" : "2",
             "parts" : [
                 {
                     "filesystem" : "ext4",
@@ -132,8 +130,7 @@
                 "stable": ["x86_64"],
                 "branched": ["x86_64"]
             },
-            "size" : "10",
-            "imgver": "3"
+            "size" : "10"
         },
         {
             "name" : "minimal-uefi",
@@ -143,7 +140,6 @@
                 "branched": ["x86_64"]
             },
             "size" : "10",
-            "imgver": "3",
             "bootopts": "uefi"
         },
         {
@@ -154,7 +150,6 @@
                 "branched": ["x86_64", "aarch64"]
             },
             "size" : "20",
-            "imgver": "4",
             "variant": "Workstation"
         },
         {
@@ -173,7 +168,6 @@
                 "branched": ["x86_64", "ppc64le", "aarch64"]
             },
             "size" : "7",
-            "imgver": "3",
             "variant": "Server"
         },
         {
@@ -181,8 +175,7 @@
             "releases" : {
                 "-1" : ["x86_64", "ppc64le", "aarch64"]
             },
-            "size" : "11",
-            "imgver" : "5"
+            "size" : "11"
         }
     ],
     "renames" : []
