@@ -1,6 +1,6 @@
 # createhdds.py
 
-createhdds.py creates and maintains the set of pre-rolled hard disk images needed for some of the Fedora openQA tests.
+createhdds.py creates and maintains the set of pre-rolled hard disk images needed for some of the Rocky Linux openQA tests.
 
 ## Requirements
 
@@ -8,13 +8,13 @@ createhdds requires libvirt-daemon-kvm, libvirt-python3, python3-libguestfs, pyt
 
 ## Usage
 
-Most usage information can be seen in the help text - just run `createhdds.py -h` for an overview of the subcommands available, and `createhdds.py (subcommand) -h` for help on a subcommand. To put it simply, the most common usage is simply to run `createhdds.py all -c`. This will create all the currently-expected images (that are arch-compatible with the host you are running `createhdds` on) that have not already been created, and recreate any that need recreating (images can have a 'maximum age' causing them to be rebuilt by `all` when they're older than that age, and images also have a 'version' - if the image's 'version' is bumped by the maintainers, `all` will rebuild it). It will also remove any image files that are present that aren't expected to be present - usually images for old releases that are no longer tested, or images we've simply stopped using. In a typical deployment of a Fedora openQA instance, the admin should set things up so the git checkout is updated and `createhdds.py all -c` is run regularly - say, once a day (and probably not while tests are being run).
+Most usage information can be seen in the help text - just run `createhdds.py -h` for an overview of the subcommands available, and `createhdds.py (subcommand) -h` for help on a subcommand. To put it simply, the most common usage is simply to run `createhdds.py all -c`. This will create all the currently-expected images (that are arch-compatible with the host you are running `createhdds` on) that have not already been created, and recreate any that need recreating (images can have a 'maximum age' causing them to be rebuilt by `all` when they're older than that age, and images also have a 'version' - if the image's 'version' is bumped by the maintainers, `all` will rebuild it). It will also remove any image files that are present that aren't expected to be present - usually images for old releases that are no longer tested, or images we've simply stopped using. In a typical deployment of a Rocky Linux openQA instance, the admin should set things up so the git checkout is updated and `createhdds.py all -c` is run regularly - say, once a day (and probably not while tests are being run).
 
 `createhdds.py check` will just check whether all expected images are present and up-to-date. If all images are present but some are outdated, it will exit 1. If some images are entirely missing, it will exit 2. This can be handy for use with things like Ansible (so you can run the check to decide whether you need to run the creation, and thus avoid spurious 'changed' statuses).
 
 There are also individual subcommands for each of the named 'image groups', allowing you to create just the image(s) from that group. For image groups which usually generate multiple images, the subcommand will have arguments that let you restrict creation to just a subset of those images (and for virt-install type images, you can create the image(s) for a different release than would usually be the case, too).
 
-In `all` mode, and in single-image mode if you do not pass `--release`, createhdds can decide what releases to build images for, for those image groups that include an installed Fedora release (the virt-install type images). A virt-install type image group can specify the releases to build images for absolutely (by giving the release numbers as positive integers), or relative to the next pending release (by giving the release numbers as negative integers). When it encounters one of these 'relative' release numbers, `createhdds` uses [fedfind](https://www.happyassassin.net/fedfind) to discover the 'current' release, and adds 1 to that (to find the 'pending' release). Just in case anything goes wrong with this, or you need to override it for some reason, the `--nextrel` argument is available for relevant subcommands to explicitly specify the 'next release'.
+In `all` mode, and in single-image mode if you do not pass `--release`, createhdds can decide what releases to build images for, for those image groups that include an installed Rocky Linux release (the virt-install type images). A virt-install type image group can specify the releases to build images for absolutely (by giving the release numbers as positive integers), or relative to the next pending release (by giving the release numbers as negative integers). When it encounters one of these 'relative' release numbers, `createhdds` uses [fedfind](https://www.happyassassin.net/fedfind) to discover the 'current' release, and adds 1 to that (to find the 'pending' release). Just in case anything goes wrong with this, or you need to override it for some reason, the `--nextrel` argument is available for relevant subcommands to explicitly specify the 'next release'.
 
 ## Specifying images / 'image groups': `hdds.json` and `.commands` files
 
@@ -56,7 +56,7 @@ Optional keys are:
 
 * `filesystem` - if set, this partition will *always* have this filesystem. If not set, the filesystem will be determined according to the image group's `filesystems` value (see below).
 * `label` - if set, this partition will have this label
-* `gpt-type` - if set, the partition will be of the type defined by the partition GUID. 
+* `gpt-type` - if set, the partition will be of the type defined by the partition GUID.
 #### `writes`
 
 This key is **optional**. Its value is a list of dicts. Each dict represents a single file that should be created on one of the partitions in the image. There are exactly three required keys for the dict:
@@ -99,7 +99,7 @@ Whew! That was a lot of explanation, but it's not really a super-complicated con
 
 #### `releases`
 
-This key is **required**. It defines the releases and arches for which images are expected; thus it determines the number of images that will be expected for this group. The value is a dict. Each key in the dict represents a release; the value for each key is a list of the arches for which images should be built for that release. The keys should be integer digit strings. **Positive** values indicate absolute release numbers. **Negative** values are relative to whatever is the pending release at the time the images are created. So a release number `-1` means 'the release one before the pending release at the time the images are built'. So if the next Fedora release will be Fedora 24 at the time the images are created, and one of the dict keys is `-1`, an image will be expected for Fedora 23.
+This key is **required**. It defines the releases and arches for which images are expected; thus it determines the number of images that will be expected for this group. The value is a dict. Each key in the dict represents a release; the value for each key is a list of the arches for which images should be built for that release. The keys should be integer digit strings. **Positive** values indicate absolute release numbers. **Negative** values are relative to whatever is the pending release at the time the images are created. So a release number `-1` means 'the release one before the pending release at the time the images are built'. So if the next Rocky Linux release will be Fedora 24 at the time the images are created, and one of the dict keys is `-1`, an image will be expected for Fedora 23.
 
 The filename for a virt-install type image always includes the release number and arch it's built for - `disk_f(release)_(name)_(arch).img`.
 
@@ -119,4 +119,4 @@ This key is **optional**. By setting it, you can pass *boot options* to the `vir
 
 ### `ks` files
 
-Customization of virt-install type images, beyond the Fedora release/arch combination, is done with `.ks` files. These are [installer kickstart](https://pykickstart.readthedocs.io/en/latest/) files. These are how we actually define what packages to install and so on for each different image group. The logic is simple: for each virt-install image group, if there is a file named `(name).ks`, that file will be passed to virt-install as the install kickstart. For instance, the `desktop.ks` file contains the install directives for the 'desktop' virt-install image group; it installs the Workstation package group, creates a regular user, and does a few other things. The kickstart documentation explains all the possible directives.
+Customization of virt-install type images, beyond the Rocky Linux release/arch combination, is done with `.ks` files. These are [installer kickstart](https://pykickstart.readthedocs.io/en/latest/) files. These are how we actually define what packages to install and so on for each different image group. The logic is simple: for each virt-install image group, if there is a file named `(name).ks`, that file will be passed to virt-install as the install kickstart. For instance, the `desktop.ks` file contains the install directives for the 'desktop' virt-install image group; it installs the Workstation package group, creates a regular user, and does a few other things. The kickstart documentation explains all the possible directives.
