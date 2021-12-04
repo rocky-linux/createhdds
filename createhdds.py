@@ -17,7 +17,7 @@
 #
 # Author: Adam Williamson <awilliam@redhat.com>
 
-"""Tool for creating hard disk images for Fedora openQA."""
+"""Tool for creating hard disk images for Rocky Linux openQA."""
 
 import argparse
 import logging
@@ -154,7 +154,7 @@ class GuestfsImage(object):
                 gpt_type = part.get("gpt_type", None)
                 if gpt_type:
                     gfs.part_set_gpt_type(disk, partnum, gpt_type)
-                # format the partition    
+                # format the partition
                 gfs.mkfs(part['filesystem'], partname, label=part.get('label'))
             # do file 'writes' (create a file with a given string as
             # its content)
@@ -210,7 +210,7 @@ class VirtInstallImage(object):
     def __init__(self, name, release, arch, size, variant=None, imgver='', maxage=14, bootopts=None):
         self.name = name
         self.size = size
-        self.filename = "disk_f{0}_{1}".format(str(release), name)
+        self.filename = "disk_rocky{0}_{1}".format(str(release), name)
         if imgver:
             self.filename = "{0}_{1}".format(self.filename, imgver)
         self.filename = "{0}_{1}.qcow2".format(self.filename, arch)
@@ -258,14 +258,14 @@ class VirtInstallImage(object):
         # figure out the best os-variant. NOTE: libosinfo >= 0.3.1
         # properly returns 1 on failure, but using workaround for old
         # bug where it didn't in case EPEL doesn't have 0.3.1
-        shortid = "fedora{0}".format(self.release)
+        shortid = "rocky{0}".format(self.release)
         args = ["osinfo-query", "os", "short-id={0}".format(shortid)]
         process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         out = process.communicate()[0].decode()
         if shortid not in out:
-            # this will just use the most recent fedora release number
+            # this will just use the most recent rocky release number
             # virt-install / osinfo knows
-            shortid = 'fedora-unknown'
+            shortid = 'rocky-unknown'
 
         # destroy and delete the domain we use for all virt-installs
         conn = libvirt.open()
@@ -284,30 +284,31 @@ class VirtInstallImage(object):
 
         tmpfile = "{0}.tmp".format(self.filename)
         arch = self.arch
-        fedoradir = 'fedora/linux'
+        rockydir = 'rocky/linux'
         memsize = '3072'
         if arch == 'i686':
             arch = 'i386'
         if arch in ['ppc64','ppc64le']:
-            fedoradir = 'fedora-secondary'
+            rockydir = 'rocky-secondary'
             memsize = '4096'
         if arch == 'i386':
-            # i686 is in fedora-secondary (until it died)
-            fedoradir = 'fedora-secondary'
+            # i686 is in rocky-secondary (until it died)
+            rockydir = 'rocky-secondary'
 
         variant = self.variant
         # From F31 onwards, Workstation tree is not installable and we
         # build Workstation images out of Everything
-        if variant == 'Workstation' and str(self.release).isdigit() and int(self.release) > 30:
-            variant = 'Everything'
-        
+        # We will always use the dvd1 ISO and the closest behavior is the Everything variant
+        variant = 'Everything'
         try:
+            # loctmp is the Distribution tree installation source. Point at the good location
+            loctmp = "https://download.rockylinux.org/pub/rocky/{0}/BaseOS/{1}/os"
             ksfile = self.kickstart_file
             xargs = "inst.ks=file:/{0}".format(ksfile)
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
                     "{0}/{1}".format(SCRIPTDIR, ksfile), "--location",
-                    loctmp.format(fedoradir, str(self.release), variant, arch), "--name", "createhdds",
+                    loctmp.format(str(self.release), arch), "--name", "createhdds",
                     "--memory", memsize, "--noreboot", "--wait", "-1"]
             if logger.getEffectiveLevel() == logging.DEBUG:
                 # let's get virt-install debug logs too
@@ -482,12 +483,10 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
     bootopts = imggrp.get('bootopts')
     # add an image for each release/arch combination
     for (release, arches) in releases.items():
+        rels = [release]
         for arch in arches:
             for rel in rels:
-                # i686 images can't be created from f31 on; let's filter
-                # out all i686 images for f31 and later. Once f30 is EOL
-                # we can just ditch them from hdds.json and remove this
-                if arch == 'i686' and (rel == 'rawhide' or int(rel) > 30):
+                if arch == 'i686' and int(rel) > 8:
                     continue
                 key = "{0}-{1}".format(rel, arch)
                 # using a dict here avoids dupes
@@ -711,7 +710,7 @@ def cli_image(args, *_):
 def parse_args(hdds):
     """Parse arguments with argparse."""
     parser = argparse.ArgumentParser(description=(
-        "Tool for creating hard disk images for Fedora openQA."))
+        "Tool for creating hard disk images for Rocky Linux openQA."))
     parser.add_argument(
         '-l', '--loglevel', help="The level of log messages to show",
         choices=('debug', 'info', 'warning', 'error', 'critical'),
