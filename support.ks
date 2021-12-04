@@ -13,7 +13,7 @@ poweroff
 
 %packages
 @core
-scsi-target-utils
+targetcli
 nfs-utils
 dnsmasq
 %end
