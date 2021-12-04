@@ -40,7 +40,7 @@
                     "filesystem" : "ext4",
                     "type" : "p",
                     "start" : "4096",
-                    "end" : "2097152"
+                    "end" : "2101247"
                 }
             ],
             "writes" : [
