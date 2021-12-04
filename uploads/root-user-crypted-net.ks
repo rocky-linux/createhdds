@@ -1,6 +1,6 @@
 bootloader --location=mbr
 network --device=link --activate --bootproto=dhcp
-url --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch
+url --url="https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/"
 lang en_US.UTF-8
 keyboard us
 timezone --utc America/New_York

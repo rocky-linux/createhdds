@@ -1,7 +1,8 @@
 bootloader --location=mbr
 network --bootproto=dhcp
-url --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch
-repo --name=updates --mirrorlist=https://mirrors.fedoraproject.org/mirrorlist?repo=updates-released-f$releasever&arch=$basearch
+url --url="https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/"
+#repo --name="epel" --baseurl="http://mirrors.kernel.org/fedora-epel/8/Everything/x86_64/"
+# use epel to keep scsi-target-utils instead of targetcli
 lang en_US.UTF-8
 keyboard us
 timezone --utc America/New_York
