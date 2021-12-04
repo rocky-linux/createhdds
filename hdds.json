@@ -177,15 +177,6 @@
             "variant": "Server"
         },
         {
-            "name" : "kde",
-            "releases" : {
-                "stable" : ["x86_64"],
-                "branched" : ["x86_64"]
-            },
-            "size" : "20",
-            "imgver": "4"
-        },
-        {
             "name" : "support",
             "releases" : {
                 "-1" : ["x86_64", "ppc64le", "aarch64"]
