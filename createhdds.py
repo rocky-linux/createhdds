@@ -221,10 +221,7 @@ class VirtInstallImage(object):
         if variant:
             self.variant = variant
         else:
-            if str(release).isdigit() and int(release) < 24:
-                self.variant = "Server"
-            else:
-                self.variant = "Everything"
+            self.variant = "BaseOS"
         self.bootopts = bootopts
 
     @property
@@ -284,25 +281,18 @@ class VirtInstallImage(object):
 
         tmpfile = "{0}.tmp".format(self.filename)
         arch = self.arch
-        rockydir = 'rocky/linux'
+        rockydir = 'rocky'
         memsize = '3072'
-        if arch == 'i686':
-            arch = 'i386'
         if arch in ['ppc64','ppc64le']:
-            rockydir = 'rocky-secondary'
             memsize = '4096'
-        if arch == 'i386':
-            # i686 is in rocky-secondary (until it died)
-            rockydir = 'rocky-secondary'
 
         variant = self.variant
-        # From F31 onwards, Workstation tree is not installable and we
-        # build Workstation images out of Everything
-        # We will always use the dvd1 ISO and the closest behavior is the Everything variant
-        variant = 'Everything'
+        if variant == 'Workstation':
+            variant = 'BaseOS'
+
         try:
             # loctmp is the Distribution tree installation source. Point at the good location
-            loctmp = "https://download.rockylinux.org/pub/rocky/{0}/BaseOS/{1}/os"
+            loctmp = "https://dl.rockylinux.org/pub/{0}/{1}/{2}/{3}/os/"
             ksfile = self.kickstart_file
             xargs = "inst.ks=file:/{0}".format(ksfile)
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
@@ -486,8 +476,6 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
         rels = [release]
         for arch in arches:
             for rel in rels:
-                if arch == 'i686' and int(rel) > 8:
-                    continue
                 key = "{0}-{1}".format(rel, arch)
                 # using a dict here avoids dupes
                 imgs[key] = VirtInstallImage(name, rel, arch, variant=variant, size=size,
