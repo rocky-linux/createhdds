@@ -12,7 +12,7 @@ firstboot --enable
 poweroff
 
 %packages
-@^workstation-product-environment
+@^workstation-product
 -selinux-policy-minimum
 %end
 
