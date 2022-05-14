@@ -302,6 +302,7 @@ class VirtInstallImage(object):
         variant = 'Everything'
         try:
             # loctmp is the Distribution tree installation source. Point at the good location
+            #loctmp = "https://download.rockylinux.org/stg/rocky/{0}/BaseOS/{1}/os"
             loctmp = "https://download.rockylinux.org/pub/rocky/{0}/BaseOS/{1}/os"
             ksfile = self.kickstart_file
             xargs = "inst.ks=file:/{0}".format(ksfile)
