@@ -145,8 +145,7 @@
                 "8": ["x86_64", "aarch64"],
                 "9" : ["x86_64", "aarch64"]
             },
-            "size" : "20",
-            "variant": "Workstation"
+            "size" : "20"
         },
         {
             "name" : "desktopencrypt",
@@ -154,8 +153,7 @@
                 "8" : ["x86_64", "aarch64"],
                 "9" : ["x86_64", "aarch64"]
             },
-            "size" : "20",
-            "variant": "Workstation"
+            "size" : "20"
         },
         {
             "name" : "server",
@@ -163,8 +161,7 @@
                 "8" : ["x86_64", "aarch64"],
                 "9" : ["x86_64", "aarch64"]
             },
-            "size" : "9",
-            "variant": "Server"
+            "size" : "9"
         },
         {
             "name" : "support",

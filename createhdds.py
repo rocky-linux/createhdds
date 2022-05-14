@@ -197,8 +197,7 @@ class GuestfsImage(object):
 
 class VirtInstallImage(object):
     """Class representing an image created by virt-install. 'release'
-    is the release the image will be built for. 'variant' is the
-    variant whose install tree should be used. 'arch' is the arch.
+    is the release the image will be built for. 'arch' is the arch.
     'size' is the desired image size, in gigabytes. 'imgver' is
     the image 'version' - in practice it's simply a string that gets
     included in the image file name if specified. 'maxage' is the
@@ -207,7 +206,7 @@ class VirtInstallImage(object):
     rebuild it. 'bootopts' are used to pass boot options to the
     virtual image to provide better control of the VM.
     """
-    def __init__(self, name, release, arch, size, variant=None, imgver='', maxage=14, bootopts=None):
+    def __init__(self, name, release, arch, size, imgver='', maxage=14, bootopts=None):
         self.name = name
         self.size = size
         self.filename = "disk_rocky{0}_{1}".format(str(release), name)
@@ -215,16 +214,8 @@ class VirtInstallImage(object):
             self.filename = "{0}_{1}".format(self.filename, imgver)
         self.filename = "{0}_{1}.qcow2".format(self.filename, arch)
         self.release = release
-        self.variant = variant
         self.arch = arch
         self.maxage = maxage
-        if variant:
-            self.variant = variant
-        else:
-            if str(release).isdigit() and int(release) < 24:
-                self.variant = "Server"
-            else:
-                self.variant = "Everything"
         self.bootopts = bootopts
 
     @property
@@ -290,11 +281,6 @@ class VirtInstallImage(object):
             rockydir = 'rocky-secondary'
             memsize = '4096'
 
-        variant = self.variant
-        # From F31 onwards, Workstation tree is not installable and we
-        # build Workstation images out of Everything
-        # We will always use the dvd1 ISO and the closest behavior is the Everything variant
-        variant = 'Everything'
         try:
             # loctmp is the Distribution tree installation source. Point at the good location
             #loctmp = "https://download.rockylinux.org/stg/rocky/{0}/BaseOS/{1}/os"
@@ -470,8 +456,6 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
     name = imggrp['name']
     # this is the second place we set a default for maxage - bit ugly
     maxage = int(imggrp.get('maxage', 14))
-    # ditto variant
-    variant = imggrp.get('variant')
     if not releases:
         releases = imggrp['releases']
     size = imggrp.get('size', 0)
@@ -486,7 +470,7 @@ def get_virtinstall_images(imggrp, nextrel=None, releases=None):
                     continue
                 key = "{0}-{1}".format(rel, arch)
                 # using a dict here avoids dupes
-                imgs[key] = VirtInstallImage(name, rel, arch, variant=variant, size=size,
+                imgs[key] = VirtInstallImage(name, rel, arch, size=size,
                                              imgver=imgver, maxage=maxage, bootopts=bootopts)
     return list(imgs.values())
 
