@@ -286,14 +286,9 @@ class VirtInstallImage(object):
         arch = self.arch
         rockydir = 'rocky/linux'
         memsize = '3072'
-        if arch == 'i686':
-            arch = 'i386'
         if arch in ['ppc64','ppc64le']:
             rockydir = 'rocky-secondary'
             memsize = '4096'
-        if arch == 'i386':
-            # i686 is in rocky-secondary (until it died)
-            rockydir = 'rocky-secondary'
 
         variant = self.variant
         # From F31 onwards, Workstation tree is not installable and we
