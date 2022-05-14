@@ -2,19 +2,19 @@
     "guestfs" : [
         {
             "name" : "full",
-            "size" : "10G",
+            "size" : "25G",
             "labels" : ["mbr", "gpt"],
             "parts" : [
                 {
                     "filesystem" : "ext4",
                     "type" : "p",
                     "start" : "4096",
-                    "end" : "10485760"
+                    "end" : "26214400"
                 },
                 {
                     "filesystem" : "ext4",
                     "type" : "p",
-                    "start" : "10485761",
+                    "start" : "26214401",
                     "end" : "-4097"
                 }
             ],
