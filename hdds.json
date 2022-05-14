@@ -125,14 +125,16 @@
         {
             "name" : "minimal",
             "releases" : {
-                "8" : ["x86_64", "aarch64"]
+                "8" : ["x86_64", "aarch64"],
+                "9" : ["x86_64", "aarch64"]
             },
             "size" : "15"
         },
         {
             "name" : "minimal-uefi",
             "releases" : {
-                "8" : ["x86_64", "aarch64"]
+                "8" : ["x86_64", "aarch64"],
+                "9" : ["x86_64", "aarch64"]
             },
             "size" : "15",
             "bootopts": "uefi"
@@ -140,7 +142,8 @@
         {
             "name" : "desktop",
             "releases" : {
-                "8": ["x86_64", "aarch64"]
+                "8": ["x86_64", "aarch64"],
+                "9" : ["x86_64", "aarch64"]
             },
             "size" : "20",
             "variant": "Workstation"
@@ -148,7 +151,8 @@
         {
             "name" : "desktopencrypt",
             "releases" : {
-                "8" : ["x86_64", "aarch64"]
+                "8" : ["x86_64", "aarch64"],
+                "9" : ["x86_64", "aarch64"]
             },
             "size" : "20",
             "variant": "Workstation"
@@ -156,7 +160,8 @@
         {
             "name" : "server",
             "releases" : {
-                "8" : ["x86_64", "aarch64"]
+                "8" : ["x86_64", "aarch64"],
+                "9" : ["x86_64", "aarch64"]
             },
             "size" : "9",
             "variant": "Server"
@@ -164,7 +169,8 @@
         {
             "name" : "support",
             "releases" : {
-                "8" : ["x86_64", "aarch64"]
+                "8" : ["x86_64", "aarch64"],
+                "9" : ["x86_64", "aarch64"]
             },
             "size" : "15"
         }
