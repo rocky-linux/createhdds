@@ -256,7 +256,7 @@ class VirtInstallImage(object):
         if shortid not in out:
             # this will just use the most recent rocky release number
             # virt-install / osinfo knows
-            shortid = 'rocky8-unknown'
+            shortid = 'rocky9.0'
 
         # destroy and delete the domain we use for all virt-installs
         conn = libvirt.open()
