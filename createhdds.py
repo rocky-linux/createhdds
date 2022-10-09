@@ -238,7 +238,7 @@ class VirtInstallImage(object):
                 logger.debug("Using kickstart %s", cand)
                 return cand
 
-    def create(self, textinst, retries=3):
+    def create(self, baseurl, textinst, retries=3):
         """Create the image."""
         if self.arch not in supported_arches():
             logger.info("Won't create %s image on %s host. This is normal, don't worry. If you "
@@ -282,15 +282,15 @@ class VirtInstallImage(object):
             memsize = '4096'
 
         try:
+            locbase = "https://download.rockylinux.org/{0}/rocky".format(baseurl)
             # loctmp is the Distribution tree installation source. Point at the good location
-            #loctmp = "https://download.rockylinux.org/stg/rocky/{0}/BaseOS/{1}/os"
-            loctmp = "https://download.rockylinux.org/pub/rocky/{0}/BaseOS/{1}/os"
+            loctmp = "{0}/{1}/BaseOS/{2}/os"
             ksfile = self.kickstart_file
             xargs = "inst.ks=file:/{0}".format(ksfile)
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
                     "{0}/{1}".format(SCRIPTDIR, ksfile), "--location",
-                    loctmp.format(str(self.release), arch), "--name", "createhdds",
+                    loctmp.format(locbase, str(self.release), arch), "--name", "createhdds",
                     "--memory", memsize, "--noreboot", "--wait", "-1"]
             if logger.getEffectiveLevel() == logging.DEBUG:
                 # let's get virt-install debug logs too
@@ -333,7 +333,7 @@ class VirtInstallImage(object):
                     os.remove(tmpfile)
                 if retries:
                     logger.info("Retrying: %s retries remain after this", str(retries))
-                    return self.create(textinst, retries=retries-1)
+                    return self.create(baseurl, textinst, retries=retries-1)
                 else:
                     sys.exit("Image creation timed out too many times!")
             if ret > 0:
@@ -607,7 +607,7 @@ def cli_all(args, hdds):
     missing.extend(outdated)
     for (num, img) in enumerate(missing, 1):
         logger.info("Creating image %s...[%s/%s]", img.filename, str(num), str(len(missing)))
-        img.create(args.textinst)
+        img.create(args.baseurl, args.textinst)
 
 def cli_check(args, hdds):
     """Function for the CLI 'check' subcommand. Basically just calls
@@ -685,7 +685,7 @@ def cli_image(args, *_):
 
     for (num, img) in enumerate(imgs, 1):
         logger.info("Creating image %s...[%s/%s]", img.filename, str(num), str(len(imgs)))
-        img.create(args.textinst)
+        img.create(args.baseurl, args.textinst)
 
 def parse_args(hdds):
     """Parse arguments with argparse."""
@@ -698,6 +698,10 @@ def parse_args(hdds):
     parser.add_argument(
         '-t', '--textinst', help="For any virt-install images, run the install in text mode "
         "and show details on stdout", action='store_true')
+    parser.add_argument(
+        '-b', '--baseurl', help="For any virt-install images, support alt baseurl for initrd and vmlinuz.",
+        choices=('pub', 'stg'),
+        default='pub')
 
     # This is a workaround for a somewhat infamous argparse bug
     # in Python 3. See:
