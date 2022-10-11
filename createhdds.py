@@ -607,7 +607,10 @@ def cli_all(args, hdds):
     missing.extend(outdated)
     for (num, img) in enumerate(missing, 1):
         logger.info("Creating image %s...[%s/%s]", img.filename, str(num), str(len(missing)))
-        img.create(args.baseurl, args.textinst)
+        if img.filename.endswith(".img"):
+          img.create(args.textinst)
+        else:
+          img.create(args.baseurl, args.textinst)
 
 def cli_check(args, hdds):
     """Function for the CLI 'check' subcommand. Basically just calls
@@ -685,7 +688,10 @@ def cli_image(args, *_):
 
     for (num, img) in enumerate(imgs, 1):
         logger.info("Creating image %s...[%s/%s]", img.filename, str(num), str(len(imgs)))
-        img.create(args.baseurl, args.textinst)
+        if imgtype == 'guestfs':
+          img.create(args.textinst)
+        else:
+          img.create(args.baseurl, args.textinst)
 
 def parse_args(hdds):
     """Parse arguments with argparse."""
