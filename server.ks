@@ -9,6 +9,7 @@ autopart
 rootpw weakpassword
 user --name=test --password=weakpassword --plaintext
 poweroff
+text
 
 %packages
 @^server-product-environment

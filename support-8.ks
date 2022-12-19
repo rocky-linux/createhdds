@@ -10,6 +10,7 @@ clearpart --all
 autopart
 rootpw weakpassword
 poweroff
+text
 
 %packages
 @core
