@@ -10,6 +10,7 @@ rootpw --plaintext weakpassword
 user --name=test --password=weakpassword --plaintext
 firstboot --enable
 poweroff
+text
 
 %packages
 @^workstation-product-environment
