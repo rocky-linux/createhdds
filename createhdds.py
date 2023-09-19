@@ -42,6 +42,7 @@ from six.moves.urllib.request import urlopen
 # directory.
 SCRIPTDIR = os.path.abspath(os.path.dirname(sys.argv[0]))
 CPUARCH = platform.processor()
+if CPUARCH == '' : CPUARCH = platform.machine()
 logger = logging.getLogger('createhdds')
 
 def handle_size(size):
