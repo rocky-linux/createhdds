@@ -250,6 +250,9 @@ class VirtInstallImage(object):
         # properly returns 1 on failure, but using workaround for old
         # bug where it didn't in case EPEL doesn't have 0.3.1
         shortid = "rocky{0}".format(self.release)
+        # rocky has beta, rc# and lookahead releases that aren't in osinfo db
+        # replace text suffix in those with unknown.
+        shortid = "{0}-unknown".format(shortid.split('-')[0])
         args = ["osinfo-query", "os", "short-id={0}".format(shortid)]
         process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         out = process.communicate()[0].decode()
