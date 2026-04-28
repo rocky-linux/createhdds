@@ -61,9 +61,9 @@ def supported_arches():
     """Provides a list of the arches for which virt-install images can
     be built on this host.
     """
-    powerpc_arches = ['ppc64', 'ppc64le', 'noarch']
-    intel_arches = ['i686', 'x86_64', 'noarch']
-    aarch64_arches = ['aarch64', 'armv7l']
+    powerpc_arches = ['ppc64le', 'noarch']
+    intel_arches = ['x86_64', 'noarch']
+    aarch64_arches = ['aarch64']
     if CPUARCH in powerpc_arches:
         supported_arches = powerpc_arches
     elif CPUARCH in intel_arches:
@@ -280,10 +280,10 @@ class VirtInstallImage(object):
         tmpfile = "{0}.tmp".format(self.filename)
         arch = self.arch
         rockydir = 'rocky/linux'
-        memsize = '3072'
+        memsize = '4096'
+        timeout = 3600
         if arch in ['ppc64','ppc64le']:
             rockydir = 'rocky-secondary'
-            memsize = '4096'
 
         try:
             locbase = "https://download.rockylinux.org/{0}/rocky".format(baseurl)
@@ -291,6 +291,9 @@ class VirtInstallImage(object):
             loctmp = "{0}/{1}/BaseOS/{2}/os"
             ksfile = self.kickstart_file
             xargs = "inst.ks=file:/{0}".format(ksfile)
+            if arch == "ppc64le":
+                # --boot uefi breaks on ppc64le
+                bootopts = self.bootopts.replace("uefi", "")
             args = ["virt-install", "--disk", "size={0},path={1}".format(self.size, tmpfile),
                     "--os-variant", shortid, "-x", xargs, "--initrd-inject",
                     "{0}/{1}".format(SCRIPTDIR, ksfile), "--location",
@@ -317,7 +320,7 @@ class VirtInstallImage(object):
                 logger.debug("Command: %s", ' '.join(args))
                 if not textinst:
                     logger.info("Connect via VNC to monitor")
-                ret = subprocess.call(args, timeout=3600)
+                ret = subprocess.call(args, timeout=timeout)
             except subprocess.TimeoutExpired:
                 logger.warning("Image creation timed out!")
                 # clean up the domain again

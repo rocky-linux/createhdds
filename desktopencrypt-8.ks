@@ -1,6 +1,8 @@
 bootloader --location=mbr
 network --bootproto=dhcp
-url --url="https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/"
+url --url="https://download.rockylinux.org/pub/rocky/$releasever/BaseOS/$basearch/os/"
+# AppStream repo must be defined to provide @^workstation-product-environment group
+repo --name=AppStream --baseurl=https://download.rockylinux.org/pub/rocky/$releasever/AppStream/$basearch/os/
 lang en_US.UTF-8
 keyboard us
 timezone --utc America/New_York

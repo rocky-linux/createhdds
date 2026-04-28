@@ -110,6 +110,35 @@
             ]
         },
         {
+            "name" : "ks-10",
+            "size" : "100M",
+            "parts" : [
+                {
+                    "filesystem" : "ext4",
+                    "type" : "p",
+                    "start" : "4096",
+                    "end" : "-1"
+                }
+            ],
+            "uploads" : [
+                {
+                    "part" : "1",
+                    "target" : "/root-user-crypted-net.ks",
+                    "source" : "root-user-crypted-net-10.ks"
+                },
+                {
+                    "part" : "1",
+                    "target" : "/freeipa.ks",
+                    "source" : "freeipa.ks"
+                },
+                {
+                    "part" : "1",
+                    "target" : "/freeipaclient.ks",
+                    "source" : "freeipaclient.ks"
+                }
+            ]
+        },
+        {
             "name" : "updates_img",
             "size" : "100M",
             "parts" : [
@@ -155,7 +184,8 @@
             "name" : "minimal",
             "releases" : {
                 "8" : ["x86_64", "aarch64"],
-                "9" : ["x86_64", "aarch64"]
+                "9" : ["x86_64", "aarch64"],
+                "10" : ["x86_64", "aarch64"]
             },
             "size" : "15",
             "bootopts": "uefi"
@@ -164,15 +194,17 @@
             "name" : "minimal-bios",
             "releases" : {
                 "8" : ["x86_64"],
-                "9" : ["x86_64"]
+                "9" : ["x86_64"],
+                "10" : ["x86_64"]
             },
             "size" : "15"
         },
         {
             "name" : "desktop",
             "releases" : {
-                "8": ["x86_64", "aarch64"],
-                "9" : ["x86_64", "aarch64"]
+                "8" : ["x86_64"],
+                "9" : ["x86_64"],
+                "10" : ["x86_64"]
             },
             "size" : "20",
             "bootopts": "uefi"
@@ -180,8 +212,9 @@
         {
             "name" : "desktopencrypt",
             "releases" : {
-                "8" : ["x86_64", "aarch64"],
-                "9" : ["x86_64", "aarch64"]
+                "8" : ["x86_64"],
+                "9" : ["x86_64"],
+                "10" : ["x86_64"]
             },
             "size" : "20",
             "bootopts": "uefi"
@@ -190,7 +223,8 @@
             "name" : "server",
             "releases" : {
                 "8" : ["x86_64", "aarch64"],
-                "9" : ["x86_64", "aarch64"]
+                "9" : ["x86_64", "aarch64"],
+                "10" : ["x86_64", "aarch64"]
             },
             "size" : "9",
             "bootopts": "uefi"
@@ -199,7 +233,8 @@
             "name" : "support",
             "releases" : {
                 "8" : ["x86_64", "aarch64"],
-                "9" : ["x86_64", "aarch64"]
+                "9" : ["x86_64", "aarch64"],
+                "10" : ["x86_64", "aarch64"]
             },
             "size" : "36",
             "bootopts": "uefi"
